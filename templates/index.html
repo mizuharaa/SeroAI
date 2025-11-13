@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' blob: data:; connect-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'">
+    <title>Deceptor.ai - AI Deepfake Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h1>Deceptor.ai</h1>
+                        <p>AI Deepfake Detection System</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-ghost">
+                        <i class="fas fa-file-alt"></i>
+                        View PRD
+                    </button>
+                    <button class="btn btn-ghost">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </button>
+                    <button class="btn btn-ghost mobile-menu-btn" id="mobileMenuBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="grid-layout">
+                <!-- Left Column - Main Content -->
+                <div class="main-column">
+                    <!-- Hero Section - Only show when idle -->
+                    <div id="heroSection" class="card hero-card">
+                        <div class="hero-image">
+                            <div class="hero-overlay">
+                                <div class="hero-content">
+                                    <i class="fas fa-shield-alt hero-icon"></i>
+                                    <h2>Protect Yourself from Deepfakes</h2>
+                                    <p>Upload videos or images to detect AI-generated or manipulated content with 85%+ accuracy</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hero-stats">
+                            <div class="stat-item">
+                                <div class="stat-number">5</div>
+                                <div class="stat-label">Detection Methods</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">85%+</div>
+                                <div class="stat-label">Accuracy Rate</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">~3m</div>
+                                <div class="stat-label">Typical Processing Time</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload Zone -->
+                    <div id="uploadSection" class="upload-zone-container">
+                        <div class="card upload-zone" id="uploadZone">
+                            <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.mp4,.mov,.avi" hidden>
+                            <div class="upload-content">
+                                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                <h3>Upload Video or Image</h3>
+                                <p>Drag and drop your file here, or click to browse</p>
+                                <p class="upload-hint">Supported: MP4, MOV, AVI, JPG, PNG (Max 500MB)</p>
+                                <button class="btn btn-primary" id="chooseFileBtn">
+                                    Choose File
+                                </button>
+                            </div>
+                            <div id="selectedFile" class="selected-file" style="display: none;">
+                                <i class="fas fa-file-video"></i>
+                                <span id="fileName"></span>
+                                <button class="btn-remove" id="removeFileBtn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Progress -->
+                    <div id="analysisSection" class="analysis-section" style="display: none;">
+                        <div class="card">
+                            <div class="analysis-header">
+                                <h3>Analyzing File</h3>
+                                <p id="analyzingFileName"></p>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="overallProgress"></div>
+                                </div>
+                                <div class="progress-text" id="progressText">0%</div>
+                            </div>
+                            <div class="methods-list" id="methodsList">
+                                <!-- Methods will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results -->
+                    <div id="resultsSection" class="results-section" style="display: none;">
+                        <div class="results-header">
+                            <div>
+                                <h2>Analysis Results</h2>
+                                <p>Complete breakdown of detection methods</p>
+                            </div>
+                            <button class="btn btn-primary" id="newAnalysisBtn">New Analysis</button>
+                        </div>
+                        <div class="results-card card">
+                            <div class="results-summary">
+                                <div class="score-circle">
+                                    <div class="score-value" id="overallScoreValue">0%</div>
+                                    <div class="score-label">Deepfake Probability</div>
+                                </div>
+                                <div class="results-info">
+                                    <div class="info-item">
+                                        <span class="info-label">File:</span>
+                                        <span id="resultFileName"></span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Processing Time:</span>
+                                        <span id="processingTime">0s</span>
+                                    </div>
+                                    <div class="info-item" id="generatorHint" style="display: none;">
+                                        <span class="info-label">Generator Hint:</span>
+                                        <span id="generatorHintText"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="results-details" id="resultsDetails">
+                                <!-- Results will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        <div class="card feedback-card" id="feedbackCard" style="display: none;">
+                            <h3>Help Us Improve</h3>
+                            <p>Your feedback makes the detector smarter. Was this prediction accurate?</p>
+                            <div class="feedback-actions">
+                                <button class="btn btn-success" id="feedbackRealBtn">
+                                    <i class="fas fa-check-circle"></i> Real / Authentic
+                                </button>
+                                <button class="btn btn-danger" id="feedbackAiBtn">
+                                    <i class="fas fa-exclamation-triangle"></i> AI / Deepfake
+                                </button>
+                            </div>
+                        <div id="feedbackNotesContainer" style="display: none;">
+                            <textarea id="feedbackNotes" placeholder="Optional notes (e.g., what looked off or convincing)"></textarea>
+                            <button class="btn btn-primary feedback-submit-btn" id="feedbackSubmitBtn" disabled>Submit</button>
+                        </div>
+                            <div class="feedback-status" id="feedbackStatus"></div>
+                        </div>
+                    </div>
+
+                    <!-- Educational Content -->
+                    <div id="educationalSection" class="educational-section">
+                        <div class="card">
+                            <h3>How It Works</h3>
+                            <div class="steps-list">
+                                <div class="step-item">
+                                    <div class="step-number">1</div>
+                                    <div class="step-content">
+                                        <h4>Upload Your File</h4>
+                                        <p>Support for videos (MP4, MOV, AVI) and images (JPG, PNG) up to 500MB</p>
+                                    </div>
+                                </div>
+                                <div class="step-item">
+                                    <div class="step-number">2</div>
+                                    <div class="step-content">
+                                        <h4>AI Analysis</h4>
+                                        <p>5 detection methods analyze pixel stability, motion coherence, spatial logic, and more</p>
+                                    </div>
+                                </div>
+                                <div class="step-item">
+                                    <div class="step-number">3</div>
+                                    <div class="step-content">
+                                        <h4>Get Results</h4>
+                                        <p>Receive a detailed report with probability score and downloadable documentation</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Info Sidebar -->
+                <div class="sidebar-column">
+                    <div class="card methods-info-card">
+                        <h3>Detection Methods</h3>
+                        <div class="methods-grid">
+                            <div class="method-card">
+                                <div class="method-icon grid">
+                                    <i class="fas fa-th"></i>
+                                </div>
+                                <h4>Pixel Stability</h4>
+                                <p>Analyzes temporal consistency in static regions</p>
+                            </div>
+                            <div class="method-card">
+                                <div class="method-icon zap">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                                <h4>Optical Flow</h4>
+                                <p>Examines motion vectors and patterns</p>
+                            </div>
+                            <div class="method-card">
+                                <div class="method-icon box">
+                                    <i class="fas fa-cube"></i>
+                                </div>
+                                <h4>Spatial Logic</h4>
+                                <p>Checks scene coherence and object persistence</p>
+                            </div>
+                            <div class="method-card">
+                                <div class="method-icon waves">
+                                    <i class="fas fa-wave-square"></i>
+                                </div>
+                                <h4>Frequency Analysis</h4>
+                                <p>Detects GAN fingerprints in spectral data</p>
+                            </div>
+                            <div class="method-card">
+                                <div class="method-icon audio">
+                                    <i class="fas fa-volume-up"></i>
+                                </div>
+                                <h4>Audio Sync</h4>
+                                <p>Verifies lip-sync and audio authenticity</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card coming-soon-card">
+                        <h3>Coming Soon</h3>
+                        <div class="coming-soon-list">
+                            <div class="coming-soon-item">
+                                <div class="coming-soon-icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div>
+                                    <p class="coming-soon-title">Real-time Call Protection</p>
+                                    <p class="coming-soon-desc">Monitor video calls and detect deepfakes in real-time</p>
+                                </div>
+                            </div>
+                            <div class="coming-soon-item">
+                                <div class="coming-soon-icon gray">
+                                    <i class="fas fa-mobile-alt"></i>
+                                </div>
+                                <div>
+                                    <p class="coming-soon-title">Mobile App</p>
+                                    <p class="coming-soon-desc">iOS and Android apps for on-the-go detection</p>
+                                </div>
+                            </div>
+                            <div class="coming-soon-item">
+                                <div class="coming-soon-icon gray">
+                                    <i class="fas fa-plug"></i>
+                                </div>
+                                <div>
+                                    <p class="coming-soon-title">API Access</p>
+                                    <p class="coming-soon-desc">Integrate deepfake detection into your apps</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card warning-card">
+                        <p><strong>Note:</strong> This is a prototype interface. Detection uses advanced computer vision and machine learning algorithms.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>Deceptor.ai - Advanced AI Deepfake Detection System</p>
+            <p>Powered by Computer Vision, Machine Learning, and Deep Learning</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
+

@@ -1,3 +1,5 @@
+// RESOLVED: prefer the SeroAI README; remove conflict markers
+# SeroAI
 # SeroAI
 
 AI-powered deepfake detection that restores trust in digital media.  
