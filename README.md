@@ -1,5 +1,4 @@
 # SeroAI
-# SeroAI
 
 AI-powered deepfake detection that restores trust in digital media.  
 Local-first (no cloud uploads), modern UI, and a fused multi-signal pipeline for accurate, fast results.
