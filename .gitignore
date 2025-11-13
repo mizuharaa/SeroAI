@@ -1,0 +1,70 @@
+# General
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Node / Web
+node_modules/
+webui/node_modules/
+webui/.vite/
+webui/dist/
+webui/.parcel-cache/
+
+# Build artifacts
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+
+# Data and uploads
+uploads/
+data/cache/
+data/*.db
+
+# Uploads
+uploads/
+*.mp4
+*.mov
+*.avi
+*.jpg
+*.jpeg
+*.png
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Flask
+instance/
+.webassets-cache
+
