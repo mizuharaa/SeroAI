@@ -1,4 +1,3 @@
-// RESOLVED: prefer the SeroAI README; remove conflict markers
 # SeroAI
 # SeroAI
 
