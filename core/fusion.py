@@ -4,6 +4,13 @@ import numpy as np
 from typing import Dict, List
 import json
 import os
+import math
+
+# Pandas is only needed when a trained model is present
+try:
+    import pandas as pd  # type: ignore
+except Exception:  # pragma: no cover
+    pd = None  # type: ignore
 try:
     import joblib  # type: ignore
 except Exception:  # pragma: no cover
@@ -32,7 +39,6 @@ from core.config import (
 )
 from core.feedback_store import get_metric_weights
 from app.config import DECISION
-import math
 
 
 class DeepfakeFusion:
@@ -41,99 +47,133 @@ class DeepfakeFusion:
     def __init__(self):
         self.model = None
         self.calibration = None
+        self.thresholds = None  # Conservative threshold config
         self.metric_weights = get_metric_weights()
         self.load_models()
     
     def load_models(self):
-        """Load pre-trained fusion model and calibration."""
+        """Load pre-trained fusion model, calibration, and threshold config."""
         # Try to load trained model
         if os.path.exists(FUSION_MODEL_PATH):
             try:
                 if joblib is not None:
                     self.model = joblib.load(FUSION_MODEL_PATH)
-            except:
-                pass
+                    # One-line log so users can confirm the model is active
+                    print(f"[fusion] Loaded supervised fusion model: {FUSION_MODEL_PATH}")
+            except Exception as e:  # pragma: no cover
+                print(f"[fusion] Failed to load supervised model ({e}); falling back to rule-based.")
+                self.model = None
         
         # Try to load calibration
         if os.path.exists(CALIBRATION_PATH):
             try:
                 with open(CALIBRATION_PATH, 'r') as f:
                     self.calibration = json.load(f)
-            except:
-                pass
+            except Exception:  # pragma: no cover
+                self.calibration = None
+        
+        # Try to load conservative thresholds
+        thresholds_path = "models/fusion_thresholds.json"
+        if os.path.exists(thresholds_path):
+            try:
+                with open(thresholds_path, 'r') as f:
+                    self.thresholds = json.load(f)
+                    print(f"[fusion] Loaded conservative thresholds: AI={self.thresholds.get('ai_threshold_conservative', 0.85):.3f}")
+            except Exception:  # pragma: no cover
+                self.thresholds = None
         
         # If no model loaded, use default rule-based fusion
         if self.model is None:
             self.model = 'rule_based'
+            print("[fusion] No trained fusion model found; using rule-based fusion.")
     
-    def extract_features(self, analysis_results: Dict) -> np.ndarray:
-        """Extract feature vector from analysis results.
+    # Columns used by the supervised fusion model (must match training)
+    TRAIN_FEATURE_COLUMNS: List[str] = [
+        "quality.blur", "quality.brisque", "quality.bitrate", "quality.shake",
+        "wm.detected",
+        "forensics.prnu", "forensics.flicker", "forensics.codec",
+        "face.mouth_exag", "face.mouth_static", "face.eye_blink", "face.sym_drift",
+        "art.edge", "art.texture", "art.color", "art.freq",
+        "temp.flow_oddity", "temp.rppg",
+    ]
+
+    def _to_float(self, value) -> float:
+        """Convert value to float; return NaN when not numeric."""
+        try:
+            if isinstance(value, (int, float)):
+                return float(value)
+            # Some booleans may sneak in; treat as 1.0/0.0
+            if isinstance(value, bool):
+                return 1.0 if value else 0.0
+        except Exception:
+            pass
+        return float("nan")
+    
+    def _get_artifact_scale(self, flow_oddity: float) -> float:
+        """
+        Get artifact down-weighting scale based on optical flow oddity.
+        
+        When motion is smooth and natural (low flow_oddity), we trust that signal
+        over artifact/frequency heuristics, which can false-positive on compressed
+        or edited real content (talk shows, sports with overlays, etc.).
         
         Args:
-            analysis_results: Dictionary with all analysis results
-            
+            flow_oddity: Optical flow oddity score [0-1]
+        
         Returns:
-            Feature vector
+            Scale factor for artifact features [0.2-1.0]
         """
-        # Extract features from different branches
-        features = []
-        
-        # Face branch features
-        face_analysis = analysis_results.get('face_analysis', {})
-        if face_analysis.get('face_detected'):
-            # Placeholder: would use face model predictions
-            features.append(0.5)  # p_ai_face_mean
-            features.append(0.5)  # p_ai_face_max
+        if flow_oddity <= 0.15:
+            return 0.2  # 80% reduction for very smooth motion
+        elif flow_oddity <= 0.25:
+            return 0.4  # 60% reduction for smooth motion
+        elif flow_oddity <= 0.35:
+            return 0.7  # 30% reduction for moderately smooth motion
         else:
-            features.append(0.5)
-            features.append(0.5)
-        
-        # Scene branch features
-        forensics = analysis_results.get('forensics', {})
-        features.append(forensics.get('prnu_score', 0.5))
-        features.append(forensics.get('flicker_score', 0.5))
-        features.append(forensics.get('codec_score', 0.5))
-        
-        # Audio-visual features
-        av_analysis = analysis_results.get('av_analysis', {})
-        features.append(av_analysis.get('sync_score', 0.5))
-        
-        # Visual artifact heuristics
-        artifacts = analysis_results.get('artifact_analysis', {})
-        features.append(artifacts.get('edge_artifact_score', 0.5))
-        features.append(artifacts.get('texture_inconsistency', 0.5))
-        features.append(artifacts.get('color_anomaly_score', 0.5))
-        features.append(artifacts.get('freq_artifact_score', 0.5))
+            return 1.0  # No reduction for irregular motion
 
-        # Facial dynamics
-        face_dyn = analysis_results.get('face_dynamics', {})
-        features.append(face_dyn.get('mouth_exaggeration_score', 0.5))
-        features.append(face_dyn.get('mouth_static_score', 0.5))
-        features.append(face_dyn.get('eye_blink_anomaly', 0.5))
-        features.append(face_dyn.get('face_symmetry_drift', 0.5))
-        
-        # Watermark features
-        watermark = analysis_results.get('watermark', {})
-        features.append(1.0 if watermark.get('detected') else 0.0)
-        features.append(watermark.get('confidence', 0.0))
-        
-        # Quality features
-        quality = analysis_results.get('quality', {})
-        blur_value = quality.get('blur', 100.0)
-        brisque_value = quality.get('brisque', 30.0)
-        if not isinstance(blur_value, (int, float)):
-            blur_value = 100.0
-        if not isinstance(brisque_value, (int, float)):
-            brisque_value = 30.0
-        features.append(float(blur_value) / 100.0)  # Normalize
-        features.append(float(brisque_value) / 100.0)  # Normalize
-        features.append(1.0 if quality.get('status') == 'good' else 0.0)
-        
-        # Scene logic features
-        scene_logic = analysis_results.get('scene_logic', {})
-        features.append(scene_logic.get('incoherence_score', 0.5))
-        
-        return np.array(features).reshape(1, -1)
+    def _extract_features_row(self, analysis_results: Dict) -> Dict[str, float]:
+        """Extract a single-row dict matching TRAIN_FEATURE_COLUMNS."""
+        quality = analysis_results.get("quality", {}) or {}
+        watermark = analysis_results.get("watermark", {}) or {}
+        forensics = analysis_results.get("forensics", {}) or {}
+        artifacts = analysis_results.get("artifact_analysis", {}) or {}
+        face_dyn = analysis_results.get("face_dynamics", {}) or {}
+        temporal = (analysis_results.get("temporal", {}) or {})
+        flow = (temporal.get("flow", {}) or {})
+        rppg = (temporal.get("rppg", {}) or {})
+
+        row: Dict[str, float] = {
+            "quality.blur": self._to_float(quality.get("blur")),
+            "quality.brisque": self._to_float(quality.get("brisque")),
+            "quality.bitrate": self._to_float(quality.get("bitrate")),
+            "quality.shake": self._to_float(quality.get("shake")),
+            "wm.detected": 1.0 if watermark.get("detected") else 0.0,
+            "forensics.prnu": self._to_float(forensics.get("prnu_score")),
+            "forensics.flicker": self._to_float(forensics.get("flicker_score")),
+            "forensics.codec": self._to_float(forensics.get("codec_score")),
+            "face.mouth_exag": self._to_float(face_dyn.get("mouth_exaggeration_score")),
+            "face.mouth_static": self._to_float(face_dyn.get("mouth_static_score")),
+            "face.eye_blink": self._to_float(face_dyn.get("eye_blink_anomaly")),
+            "face.sym_drift": self._to_float(face_dyn.get("face_symmetry_drift")),
+            "art.edge": self._to_float(artifacts.get("edge_artifact_score")),
+            "art.texture": self._to_float(artifacts.get("texture_inconsistency")),
+            "art.color": self._to_float(artifacts.get("color_anomaly_score")),
+            "art.freq": self._to_float(artifacts.get("freq_artifact_score")),
+            "temp.flow_oddity": self._to_float(flow.get("oddity_score")),
+            "temp.rppg": self._to_float(rppg.get("rppg_score")),
+        }
+        return row
+
+    def extract_features_df(self, analysis_results: Dict):
+        """Return a pandas DataFrame with one row and named columns for the model."""
+        # If pandas unavailable (very minimal env), fall back to rule-based
+        if pd is None:  # pragma: no cover
+            return None
+        row = self._extract_features_row(analysis_results)
+        # Ensure column order matches training
+        data = {col: [row.get(col)] for col in self.TRAIN_FEATURE_COLUMNS}
+        return pd.DataFrame(data)
     
     def fuse_rule_based(self, analysis_results: Dict) -> float:
         """Rule-based fusion (fallback when no trained model).
@@ -173,17 +213,23 @@ class DeepfakeFusion:
         flicker = forensics.get('flicker_score', 0.5)
         codec = forensics.get('codec_score', 0.5)
         
-        # PRNU: lower = more likely AI
+        # Get flow oddity early for forensics scaling
+        temporal = analysis_results.get('temporal', {}) or {}
+        flow = (temporal.get('flow', {}) or {})
+        oddity = float(flow.get('oddity_score', 0.5))
+        forensics_scale = self._get_artifact_scale(oddity) if oddity <= 0.30 else 1.0
+        
+        # PRNU: lower = more likely AI (don't scale - this is a strong real signal)
         scores.append(1.0 - prnu)
         weights.append(weighted('forensics_prnu', 0.2))
         
-        # Flicker: higher = more likely AI
+        # Flicker: higher = more likely AI (scale down for smooth motion)
         scores.append(flicker)
-        weights.append(weighted('forensics_flicker', 0.18))
+        weights.append(weighted('forensics_flicker', 0.18 * forensics_scale))
         
-        # Codec: higher = more likely AI
+        # Codec: higher = more likely AI (scale down for smooth motion)
         scores.append(codec)
-        weights.append(weighted('forensics_codec', 0.15))
+        weights.append(weighted('forensics_codec', 0.15 * forensics_scale))
         
         # Audio-visual
         av_analysis = analysis_results.get('av_analysis', {})
@@ -197,16 +243,20 @@ class DeepfakeFusion:
         edge_score = artifacts.get('edge_artifact_score', 0.5)
         texture_score = artifacts.get('texture_inconsistency', 0.5)
         color_score = artifacts.get('color_anomaly_score', 0.5)
-        
-        scores.append(edge_score)
-        weights.append(weighted('edge_artifacts', 0.16))
-        scores.append(texture_score)
-        weights.append(weighted('texture_inconsistency', 0.14))
-        scores.append(color_score)
-        weights.append(weighted('color_anomaly', 0.1))
         freq_score = artifacts.get('freq_artifact_score', 0.5)
+
+        # Smooth artifact down-weighting based on optical flow oddity (already extracted above)
+        # When motion is natural, artifact heuristics often false-positive on compression/overlays
+        artifact_scale = self._get_artifact_scale(oddity)
+
+        scores.append(edge_score)
+        weights.append(weighted('edge_artifacts', 0.16 * artifact_scale))
+        scores.append(texture_score)
+        weights.append(weighted('texture_inconsistency', 0.14 * artifact_scale))
+        scores.append(color_score)
+        weights.append(weighted('color_anomaly', 0.1 * artifact_scale))
         scores.append(freq_score)
-        weights.append(weighted('freq_artifacts', 0.14))
+        weights.append(weighted('freq_artifacts', 0.14 * artifact_scale))
 
         # Face dynamics heuristics
         face_dyn = analysis_results.get('face_dynamics', {})
@@ -233,8 +283,9 @@ class DeepfakeFusion:
         # Quality adjustment
         quality = analysis_results.get('quality', {})
         if quality.get('status') == 'low':
-            # Down-weight all scores if quality is low
-            weights = [w * 0.7 for w in weights]
+            # Down-weight fragile features slightly if quality is low
+            # Reduced from 0.7 to 0.85 (more lenient - quality matters less)
+            weights = [w * 0.85 for w in weights]
         
         # Weighted average
         if weights:
@@ -245,7 +296,11 @@ class DeepfakeFusion:
         return float(np.clip(prob_ai, 0.0, 1.0))
     
     def _apply_hard_evidence_boosts(self, prob_ai: float, analysis_results: Dict) -> float:
-        """Apply logit-space boosts for hard evidence."""
+        """
+        Apply logit-space boosts for hard evidence and real-evidence calming.
+        
+        This is the critical function for reducing false positives on normal content.
+        """
         def to_logit(p: float) -> float:
             p = float(np.clip(p, 1e-6, 1.0 - 1e-6))
             return float(np.log(p / (1.0 - p)))
@@ -254,12 +309,87 @@ class DeepfakeFusion:
         
         z = to_logit(prob_ai)
         
-        # Evidence extraction
+        # ========== REAL-EVIDENCE CALMING (counter false positives) ==========
+        # Apply logit adjustments for strong real-world signals
+        real_evidence_count = 0
+        real_evidence_details = []
+        
+        try:
+            forensics = analysis_results.get('forensics', {}) or {}
+            av = analysis_results.get('av_analysis', {}) or {}
+            temporal = (analysis_results.get('temporal', {}) or {})
+            flow = (temporal.get('flow', {}) or {})
+            rppg = (temporal.get('rppg', {}) or {})
+            scene_logic = analysis_results.get('scene_logic', {}) or {}
+            quality = analysis_results.get('quality', {}) or {}
+
+            prnu = float(forensics.get('prnu_score', 0.5))
+            sync = float(av.get('sync_score', 0.5))
+            rppg_score = float(rppg.get('rppg_score', 0.5))
+            oddity = float(flow.get('oddity_score', 0.5))
+            incoh = float(scene_logic.get('incoherence_score', 0.5))
+            qual_status = quality.get('status', 'unknown')  # Don't default to 'high'
+
+            # Strong sensor pattern → likely real camera
+            # Relaxed back to 0.70 - too strict at 0.75
+            if prnu >= 0.70:
+                z -= 0.6  # Reduced from 0.8 - less aggressive
+                real_evidence_count += 1
+                real_evidence_details.append('strong_prnu')
+            
+            # Good A/V sync → real
+            # Relaxed back to 0.80 - too strict at 0.90
+            if sync >= 0.80:
+                z -= 0.3  # Reduced from 0.5 - less aggressive
+                real_evidence_count += 1
+                real_evidence_details.append('good_sync')
+            
+            # Strong physiological coherence (clear pulse) → real
+            # Relaxed to 0.25 - too strict at 0.20
+            if rppg_score <= 0.25:
+                z -= 0.3  # Reduced from 0.5 - less aggressive
+                real_evidence_count += 1
+                real_evidence_details.append('strong_rppg')
+            
+            # Smooth camera motion → real
+            # Relaxed to 0.20 - too strict at 0.15
+            if oddity <= 0.20:
+                z -= 0.3  # Reduced from 0.4 - less aggressive
+                real_evidence_count += 1
+                real_evidence_details.append('smooth_motion')
+            
+            # Scene consistent → gentle calm
+            # Relaxed to 0.35 - too strict at 0.30
+            if incoh <= 0.35 and not scene_logic.get('flag'):
+                z -= 0.15  # Reduced from 0.2 - less aggressive
+                real_evidence_count += 1
+                real_evidence_details.append('scene_coherent')
+            
+            # Don't count quality as evidence - it's not a deepfake signal
+        
+        except Exception:
+            pass
+
+        # ========== HARD AI EVIDENCE (boosts AI probability) ==========
         wm = analysis_results.get('watermark', {})
         has_wm = bool(wm.get('detected') and wm.get('confidence', 0.0) >= 0.8)
         
+        # NEW: Check for AI generator watermark (Sora, Runway, etc.)
+        has_generator_wm = bool(
+            wm.get('generator_hint', False) and
+            wm.get('confidence', 0.0) >= 0.8 and
+            wm.get('persistent', False)
+        )
+        
         scene_logic = analysis_results.get('scene_logic', {})
         has_logic_break = bool(scene_logic.get('flag') and scene_logic.get('confidence', 0.0) >= 0.8)
+        
+        # Strong logic break (very high incoherence)
+        has_strong_logic_break = bool(
+            scene_logic.get('flag') and
+            scene_logic.get('incoherence_score', 0.0) >= 0.8 and
+            scene_logic.get('confidence', 0.0) >= 0.8
+        )
         
         face_dyn = analysis_results.get('face_dynamics', {})
         anatomy_max = max(
@@ -268,16 +398,77 @@ class DeepfakeFusion:
             face_dyn.get('eye_blink_anomaly', 0.0),
             face_dyn.get('face_symmetry_drift', 0.0),
         )
-        has_anatomy = bool(anatomy_max >= 0.85)
+        has_anatomy = bool(anatomy_max >= 0.90)
         
-        if has_logic_break:
-            z += DECISION["LOGIC_BREAK_LOGIT_BONUS"]
-        if has_wm:
+        # Apply logit boosts
+        if has_generator_wm:
+            # STRONG boost for AI generator watermarks
+            z += DECISION["WATERMARK_GENERATOR_LOGIT_BONUS"]
+        elif has_wm:
+            # Regular watermark boost
             z += DECISION["WATERMARK_LOGIT_BONUS"]
+        
+        if has_strong_logic_break:
+            # Strong scene logic break
+            z += DECISION["LOGIC_BREAK_STRONG_LOGIT_BONUS"]
+        elif has_logic_break:
+            # Regular logic break
+            z += DECISION["LOGIC_BREAK_LOGIT_BONUS"]
+        
         if has_anatomy:
             z += DECISION["ANATOMY_LOGIT_BONUS"]
         
-        return to_prob(z)
+        # Convert back to probability
+        prob_after_boosts = to_prob(z)
+        
+        # Track hard AI evidence for later use
+        hard_ai_evidence = has_generator_wm or has_strong_logic_break
+        hard_ai_details = []
+        if has_generator_wm:
+            hard_ai_details.append(f"AI generator watermark: {wm.get('watermark', 'UNKNOWN')}")
+        if has_strong_logic_break:
+            hard_ai_details.append(f"Strong scene logic break (incoherence={scene_logic.get('incoherence_score', 0):.2f})")
+        
+        # ========== HARD AI EVIDENCE ENFORCEMENT ==========
+        # When we have hard AI evidence (generator watermark or strong logic break),
+        # enforce minimum AI probability and cap real probability
+        if hard_ai_evidence:
+            # Enforce minimum AI probability
+            prob_after_boosts = max(prob_after_boosts, DECISION["HARD_AI_MIN_PROB"])
+            
+            # Store hard AI evidence info for explanation
+            analysis_results['_hard_ai_evidence'] = {
+                'applied': True,
+                'details': hard_ai_details,
+                'min_prob_enforced': DECISION["HARD_AI_MIN_PROB"],
+            }
+            
+            # Skip real-evidence override when hard AI evidence present
+            return prob_after_boosts
+        
+        # ========== REAL-EVIDENCE OVERRIDE ==========
+        # ONLY trigger if we have VERY strong real evidence (≥4 criteria) 
+        # AND the probability is suspiciously high (>0.75)
+        # AND there's NO hard AI evidence
+        
+        # Only apply override if:
+        # 1. We have 4+ strong real signals (very rare)
+        # 2. Model is predicting high AI probability (>0.75)
+        # 3. No hard AI evidence
+        if real_evidence_count >= 4 and prob_after_boosts > 0.75:
+            # Conservative cap to prevent false positives on heavily compressed real content
+            override_cap = 0.65
+            # Store override info for explanation layer
+            analysis_results['_real_evidence_override'] = {
+                'applied': True,
+                'count': real_evidence_count,
+                'details': real_evidence_details,
+                'original_prob': prob_after_boosts,
+                'capped_prob': override_cap
+            }
+            return override_cap
+        
+        return prob_after_boosts
     
     def predict(self, analysis_results: Dict) -> float:
         """Predict probability of AI generation.
@@ -290,12 +481,15 @@ class DeepfakeFusion:
         """
         # Refresh adaptive weights in case new feedback has arrived
         self.metric_weights = get_metric_weights()
-        if self.model == 'rule_based':
+        if isinstance(self.model, str) or self.model is None:
             prob = self.fuse_rule_based(analysis_results)
         else:
             # Use trained model
-            features = self.extract_features(analysis_results)
-            prob = self.model.predict_proba(features)[0, 1]
+            df = self.extract_features_df(analysis_results)
+            if df is None:  # Safety: pandas missing → fallback
+                prob = self.fuse_rule_based(analysis_results)
+            else:
+                prob = float(self.model.predict_proba(df)[0, 1])
         
         # Apply calibration if available
         if self.calibration:
@@ -309,36 +503,42 @@ class DeepfakeFusion:
         # Hard-evidence overrides (logit boosts)
         prob = self._apply_hard_evidence_boosts(prob, analysis_results)
 
+        # Check if hard AI evidence was applied
+        has_hard_ai = analysis_results.get('_hard_ai_evidence', {}).get('applied', False)
+        
         # Independence rule: require two strong independent branches to exceed 0.90
-        strong = 0
-        wm = analysis_results.get('watermark', {})
-        if wm.get('detected') and wm.get('persistent') and wm.get('corner') and wm.get('confidence', 0.0) >= 0.85:
-            strong += 1
-        scene_logic = analysis_results.get('scene_logic', {})
-        if scene_logic.get('flag') and scene_logic.get('confidence', 0.0) >= 0.8:
-            strong += 1
-        artifacts = analysis_results.get('artifact_analysis', {})
-        if artifacts.get('freq_artifact_score', 0.0) >= 0.8 or artifacts.get('edge_artifact_score', 0.0) >= 0.8:
-            strong += 1
-        face_dyn = analysis_results.get('face_dynamics', {})
-        if max(
-            face_dyn.get('mouth_exaggeration_score', 0.0),
-            face_dyn.get('mouth_static_score', 0.0),
-            face_dyn.get('eye_blink_anomaly', 0.0),
-            face_dyn.get('face_symmetry_drift', 0.0),
-        ) >= 0.85:
-            strong += 1
-        temporal = analysis_results.get('temporal', {})
-        if temporal.get('flow', {}).get('oddity_score', 0.0) >= 0.8 or temporal.get('rppg', {}).get('rppg_score', 0.0) >= 0.8:
-            strong += 1
+        # SKIP this rule if hard AI evidence present
+        if not has_hard_ai:
+            strong = 0
+            wm = analysis_results.get('watermark', {})
+            if wm.get('detected') and wm.get('persistent') and wm.get('corner') and wm.get('confidence', 0.0) >= 0.85:
+                strong += 1
+            scene_logic = analysis_results.get('scene_logic', {})
+            if scene_logic.get('flag') and scene_logic.get('confidence', 0.0) >= 0.8:
+                strong += 1
+            artifacts = analysis_results.get('artifact_analysis', {})
+            if artifacts.get('freq_artifact_score', 0.0) >= 0.8 or artifacts.get('edge_artifact_score', 0.0) >= 0.8:
+                strong += 1
+            face_dyn = analysis_results.get('face_dynamics', {})
+            if max(
+                face_dyn.get('mouth_exaggeration_score', 0.0),
+                face_dyn.get('mouth_static_score', 0.0),
+                face_dyn.get('eye_blink_anomaly', 0.0),
+                face_dyn.get('face_symmetry_drift', 0.0),
+            ) >= 0.85:
+                strong += 1
+            temporal = analysis_results.get('temporal', {})
+            if temporal.get('flow', {}).get('oddity_score', 0.0) >= 0.8 or temporal.get('rppg', {}).get('rppg_score', 0.0) >= 0.8:
+                strong += 1
 
-        if prob > 0.90 and strong < 2:
-            prob = 0.90
+            if prob > 0.90 and strong < 2:
+                prob = 0.90
 
-        # Low quality and only one strong branch → cap
-        quality = analysis_results.get('quality', {})
-        if quality.get('status') == 'low' and strong <= 1:
-            prob = min(prob, 0.75)
+            # Low quality and only one strong branch → cap
+            # SKIP this cap if hard AI evidence present
+            quality = analysis_results.get('quality', {})
+            if quality.get('status') == 'low' and strong <= 1:
+                prob = min(prob, 0.75)
 
         return float(np.clip(prob, 0.0, 1.0))
     
@@ -379,6 +579,41 @@ def generate_reasons(analysis_results: Dict, prob_ai: float) -> List[Dict]:
         List of reason dictionaries
     """
     reasons = []
+    
+    # ========== HARD AI EVIDENCE (highest priority - shows AI generator detection) ==========
+    hard_ai_info = analysis_results.get('_hard_ai_evidence', {})
+    if hard_ai_info.get('applied'):
+        details_str = '; '.join(hard_ai_info.get('details', []))
+        reasons.append({
+            'name': 'hard_ai_evidence',
+            'weight': 1.0,
+            'detail': f"🚨 HARD AI EVIDENCE DETECTED: {details_str} → enforcing minimum AI probability ({hard_ai_info.get('min_prob_enforced', 0.95):.0%})",
+            'confidence': 0.98
+        })
+    
+    # ========== REAL-EVIDENCE OVERRIDE (only applies when NO hard AI evidence) ==========
+    override_info = analysis_results.get('_real_evidence_override', {})
+    if override_info.get('applied'):
+        details_str = ', '.join(override_info.get('details', []))
+        reasons.append({
+            'name': 'real_evidence_override',
+            'weight': 1.0,
+            'detail': f"Multiple strong real-world cues detected ({details_str}) → lowering AI probability to avoid false positives on normal footage",
+            'confidence': 0.95
+        })
+    
+    # ========== ARTIFACT DOWN-WEIGHTING (explain when applied) ==========
+    temporal = analysis_results.get('temporal', {}) or {}
+    flow = temporal.get('flow', {}) or {}
+    oddity = float(flow.get('oddity_score', 0.5))
+    if oddity <= 0.30:
+        scale = 0.2 if oddity <= 0.15 else (0.4 if oddity <= 0.25 else 0.7)
+        reasons.append({
+            'name': 'artifact_downweight',
+            'weight': 0.5,
+            'detail': f"Smooth natural motion detected (oddity={oddity:.2f}) → artifact/frequency heuristics down-weighted by {int((1-scale)*100)}% to avoid false positives",
+            'confidence': 0.85
+        })
     
     # Watermark
     watermark = analysis_results.get('watermark', {})

@@ -9,7 +9,7 @@ import uuid
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.quality_gate import assess_quality
-from core.watermark_ocr import detect_watermark_in_video, detect_watermark_in_image
+from core.watermark_ocr_v2 import detect_watermark_in_video, detect_watermark_in_image
 from core.forensics import analyze_forensics
 from core.face_detect import analyze_faces_in_video
 from core.fusion import DeepfakeFusion, generate_reasons

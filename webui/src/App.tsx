@@ -18,13 +18,18 @@ import {
   ChevronDown,
   Upload,
   BarChart3,
-  Lock
+  Lock,
+  Search,
+  Network,
+  Timer,
+  Sparkles
 } from 'lucide-react'
 import { Twitter, Github, Linkedin } from 'lucide-react'
-import { RealisticGlobe } from './components/RealisticGlobe'
+// import { SeroGlobe } from './components/SeroGlobe'
 import { UploadZone } from './components/UploadZone'
 import { AnalysisProgress } from './components/AnalysisProgress'
 import { ResultsDisplay } from './components/ResultsDisplay'
+import { SchoolsMarquee } from './components/SchoolsMarquee'
 
 const navItems = {
   Product: {
@@ -95,25 +100,30 @@ export default function App() {
     }, 150)
   }
 
-  // Hard theme flip that cannot silently fail (DOM-first, then state)
-  const toggleThemeHard = () => {
+  // Delayed theme flip: play animation first, then switch theme for a smoother effect
+  const handleDarkModeToggle = () => {
     const html = document.documentElement
     const newDark = !html.classList.contains('dark')
-    if (newDark) {
-      html.classList.add('dark')
-    } else {
-      html.classList.remove('dark')
-    }
-    try {
-      localStorage.setItem('theme', newDark ? 'dark' : 'light')
-    } catch {}
-    setIsDarkMode(newDark)
+
+    // Preview target theme in the transition overlay only
     setNextDarkMode(newDark)
     setIsTransitioning(true)
+
+    // Apply the actual theme after the animation finishes
+    const ANIM_MS = 900
     setTimeout(() => {
+      if (newDark) {
+        html.classList.add('dark')
+      } else {
+        html.classList.remove('dark')
+      }
+      try {
+        localStorage.setItem('theme', newDark ? 'dark' : 'light')
+      } catch {}
+      setIsDarkMode(newDark)
       setIsTransitioning(false)
       setNextDarkMode(null)
-    }, 800)
+    }, ANIM_MS)
   }
 
   // Initialize state from whatever index.html already applied; do not mutate here
@@ -146,7 +156,7 @@ export default function App() {
     }
   }, [isDarkMode])
 
-  const handleDarkModeToggle = () => toggleThemeHard()
+  // (handler defined above)
 
   // Use nextDarkMode during transition, fallback to isDarkMode
   const displayDarkMode = nextDarkMode !== null ? nextDarkMode : isDarkMode
@@ -404,6 +414,7 @@ export default function App() {
           <WhySeroSection />
           <GlobalSection />
           <DashboardSection />
+          <SchoolsMarquee />
           <Footer />
         </>
       ) : (
@@ -446,8 +457,8 @@ function DetectPage() {
             </div>
             <div className="hidden md:block">
               <div className="rounded-2xl p-4 bg-white/80 dark:bg-slate-900/80 border border-gray-200 dark:border-slate-700 shadow">
-                <div className="text-sm text-gray-600 dark:text-gray-300">Average processing time</div>
-                <div className="text-2xl font-semibold text-orange-600 dark:text-orange-400">~ 3.2s</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">Typical processing time</div>
+                <div className="text-2xl font-semibold text-orange-600 dark:text-orange-400">~ 8–12s</div>
               </div>
             </div>
           </div>
@@ -472,6 +483,7 @@ function DetectPage() {
       </div>
       {/* Main detect content */}
       <DetectSection />
+      <SchoolsMarquee />
       <Footer />
     </div>
   )
@@ -484,27 +496,46 @@ function HeroLeft() {
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="inline-flex items-center gap-2 px-4 py-2 bg-white/70 dark:bg-slate-800/70 rounded-full border border-orange-200 dark:border-orange-900/30"
+        className="inline-flex items-center gap-2 px-4 py-2 bg-white/70 dark:bg-slate-800/70 rounded-full border border-orange-200 dark:border-orange-900/30 backdrop-blur-sm"
       >
-        <Zap className="w-4 h-4 text-orange-600" />
-        <span className="text-gray-700 dark:text-gray-300">Powered by AI Algorithms</span>
+        <motion.div
+          animate={{ rotate: [0, 360] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+        >
+          <Zap className="w-4 h-4 text-orange-600" />
+        </motion.div>
+        <span className="text-gray-700 dark:text-gray-300 font-medium">Powered by Neural Forensics</span>
       </motion.div>
       <div className="space-y-4">
         <h1
           className="text-gray-900 dark:text-white tracking-tight leading-[0.9]"
           style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 900 }}
         >
-          <motion.span initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="block text-7xl sm:text-8xl lg:text-9xl">
+          <motion.span 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5, delay: 0.3 }} 
+            className="block text-7xl sm:text-8xl lg:text-9xl font-black"
+          >
             See Beyond
           </motion.span>
-          <motion.span initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }} className="block text-7xl sm:text-8xl lg:text-9xl">
+          <motion.span 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5, delay: 0.4 }} 
+            className="block text-7xl sm:text-8xl lg:text-9xl font-black"
+          >
             Reality
           </motion.span>
           <motion.span
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="block text-7xl sm:text-8xl lg:text-9xl bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent"
+            className="block text-7xl sm:text-8xl lg:text-9xl font-black bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 bg-clip-text text-transparent"
+            style={{
+              textShadow: '0 0 80px rgba(249, 115, 22, 0.3)',
+              WebkitTextStroke: '1px rgba(249, 115, 22, 0.1)'
+            }}
           >
             with Sero
           </motion.span>
@@ -530,19 +561,19 @@ function StatsRow() {
       <div className="flex items-center gap-2">
         <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
         <span className="text-gray-700 dark:text-gray-300">
-          <span className="text-gray-900 dark:text-white">99.2%</span> Accuracy
+          <span className="text-gray-900 dark:text-white">90%+</span> Precision (high-signal)
         </span>
       </div>
       <div className="flex items-center gap-2">
         <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
         <span className="text-gray-700 dark:text-gray-300">
-          <span className="text-gray-900 dark:text-white">&lt; 5s</span> Detection Time
+          <span className="text-gray-900 dark:text-white">≈ 8–12s</span> Detection Time
         </span>
       </div>
       <div className="flex items-center gap-2">
         <div className="w-2 h-2 bg-violet-500 rounded-full animate-pulse" />
         <span className="text-gray-700 dark:text-gray-300">
-          <span className="text-gray-900 dark:text-white">10M+</span> Files Analyzed
+          <span className="text-gray-900 dark:text-white">3K+</span> Videos Trained
         </span>
       </div>
     </motion.div>
@@ -589,6 +620,7 @@ function DetectSection() {
   const [overallProgress, setOverallProgress] = useState(0)
   const [overallScore, setOverallScore] = useState(0)
   const [processingTime, setProcessingTime] = useState(0)
+  const [feedbackId, setFeedbackId] = useState<string | null>(null)
   type LocalAnalysisMethod = {
     id: string
     name: string
@@ -599,12 +631,13 @@ function DetectSection() {
     Array<{ method: string; score: number; confidence: number; details: string[]; icon: 'eye' | 'zap' | 'waves' | 'box' | 'audio' | 'grid' }>
   >([])
   const [methods, setMethods] = useState<LocalAnalysisMethod[]>([
-    { id: '1', name: 'Pixel Stability Analysis', description: 'Analyzing temporal consistency in static regions', status: 'pending' },
-    { id: '2', name: 'Biological Inconsistency Detection', description: 'Examining facial landmarks and body movements', status: 'pending' },
-    { id: '3', name: 'Spatial Logic Verification', description: 'Checking scene coherence and object persistence', status: 'pending' },
-    { id: '4', name: 'Frequency Domain Analysis', description: 'Detecting GAN fingerprints in spectral data', status: 'pending' },
-    { id: '5', name: 'Optical Flow Analysis', description: 'Analyzing motion vectors and patterns', status: 'pending' },
-    { id: '6', name: 'Audio-Visual Sync Check', description: 'Verifying lip-sync and audio authenticity', status: 'pending' }
+    // Order matches backend stage completion so checks cascade top→bottom
+    { id: '1', name: 'Frequency Domain Analysis', description: 'Detecting GAN fingerprints in spectral data', status: 'pending' }, // forensics
+    { id: '2', name: 'Pixel Stability Analysis', description: 'Analyzing temporal consistency in static regions', status: 'pending' }, // artifact
+    { id: '3', name: 'Biological Inconsistency Detection', description: 'Examining facial landmarks and body movements', status: 'pending' }, // face_dynamics
+    { id: '4', name: 'Optical Flow Analysis', description: 'Analyzing motion vectors and patterns', status: 'pending' }, // temporal
+    { id: '5', name: 'Spatial Logic Verification', description: 'Checking scene coherence and object persistence', status: 'pending' }, // scene_logic
+    { id: '6', name: 'Audio-Visual Sync Check', description: 'Verifying lip-sync and audio authenticity', status: 'pending' } // audio_visual
   ])
 
   const handleFileSelect = async (file: File) => {
@@ -638,12 +671,21 @@ function DetectSection() {
           setOverallProgress(job.progress || 0)
           const completed = job.completedStages || []
           const currentStage = job.stage
-          const stageMap: Record<string, number> = { quality: 0, watermark: 1, forensics: 2, face: 3, audio_visual: 4, scene_logic: 5 }
+          // Map backend stages to our 6 UI steps in the order shown to users.
+          // Backend emits: quality, watermark, forensics, face_analysis, artifact, face_dynamics, temporal, scene_logic, audio_visual, fusion
+          const indexToStage: Record<number, string> = {
+            0: 'forensics',
+            1: 'artifact',
+            2: 'face_dynamics',
+            3: 'temporal',
+            4: 'scene_logic',
+            5: 'audio_visual'
+          }
           setMethods((prev) =>
             prev.map((m, idx) => {
-              const stageName = Object.keys(stageMap).find((k) => stageMap[k] === idx)
-              const isComplete = stageName && completed.includes(stageName)
-              const isAnalyzing = stageName && currentStage === stageName
+              const stageName = indexToStage[idx]
+              const isComplete = stageName ? completed.includes(stageName) : false
+              const isAnalyzing = stageName ? currentStage === stageName : false
               return { ...m, status: isComplete ? 'complete' : isAnalyzing ? 'analyzing' : 'pending' }
             })
           )
@@ -655,6 +697,7 @@ function DetectSection() {
             const transformed: typeof results = backendResult.results || []
             setResults(transformed)
             setOverallScore(backendResult.overallScore || 50)
+            setFeedbackId(backendResult.feedbackId || null)
           } else if (job.status === 'error' || job.status === 'failed') {
             clearInterval(poll)
             alert(`Analysis failed: ${job.error || 'Unknown error'}`)
@@ -689,7 +732,7 @@ function DetectSection() {
         </div>
         {selectedFile && results.length > 0 && (
           <div className="mt-10">
-            <ResultsDisplay overallScore={overallScore} results={results} fileName={selectedFile.name} processingTime={processingTime} />
+            <ResultsDisplay overallScore={overallScore} results={results} fileName={selectedFile.name} processingTime={processingTime} feedbackId={feedbackId || undefined} />
           </div>
         )}
       </div>
@@ -792,33 +835,42 @@ function HowItWorksSection() {
   const isInView = useInView(ref, { once: false, margin: '-100px' })
   return (
     <section ref={ref} className="py-24 bg-white dark:bg-slate-950 relative overflow-hidden">
+      {/* Background effects */}
       <div className="absolute inset-0 pointer-events-none">
+        {/* Circuit-like mesh grid */}
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]" style={{
+          backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(249 115 22) 1px, transparent 0)',
+          backgroundSize: '40px 40px'
+        }} />
+        
+        {/* Floating orbs */}
         <motion.div
           animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
           transition={{ duration: 6, repeat: Infinity }}
-          className="absolute top-20 left-10 w-20 h-20 bg-orange-400/10 rounded-full blur-xl"
+          className="absolute top-20 left-10 w-32 h-32 bg-orange-400/10 rounded-full blur-3xl"
         />
         <motion.div
           animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
           transition={{ duration: 7, repeat: Infinity }}
-          className="absolute bottom-20 right-10 w-32 h-32 bg-pink-400/10 rounded-full blur-xl"
+          className="absolute bottom-20 right-10 w-40 h-40 bg-pink-400/10 rounded-full blur-3xl"
         />
         <motion.div
           animate={{ y: [0, -15, 0], x: [0, 15, 0] }}
           transition={{ duration: 8, repeat: Infinity }}
-          className="absolute top-1/2 right-1/4 w-24 h-24 bg-purple-400/10 rounded-full blur-xl"
+          className="absolute top-1/2 right-1/4 w-36 h-36 bg-purple-400/10 rounded-full blur-3xl"
         />
       </div>
+      
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 0.6 }}
-            className="text-5xl lg:text-7xl text-gray-900 dark:text-white mb-6 tracking-tight"
-            style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 900 }}
+            className="text-5xl lg:text-7xl text-gray-900 dark:text-white mb-6 tracking-tight font-black"
+            style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
           >
-            How <span className="bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">Sero Works</span>
+            How <span className="bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">Sero Works</span>
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -829,37 +881,81 @@ function HowItWorksSection() {
             Three powerful detection methods working together to identify deepfakes
           </motion.p>
         </div>
-        <div className="grid md:grid-cols-3 gap-8">
+        
+        {/* Connection lines between cards */}
+        <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-px pointer-events-none">
+          <svg className="w-full h-full" style={{ position: 'absolute', top: 0, left: 0 }}>
+            <motion.line
+              x1="20%" y1="0" x2="50%" y2="0"
+              stroke="url(#gradient1)"
+              strokeWidth="2"
+              strokeDasharray="5,5"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={isInView ? { pathLength: 1, opacity: 0.3 } : { pathLength: 0, opacity: 0 }}
+              transition={{ duration: 1.5, delay: 0.5 }}
+            />
+            <motion.line
+              x1="50%" y1="0" x2="80%" y2="0"
+              stroke="url(#gradient2)"
+              strokeWidth="2"
+              strokeDasharray="5,5"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={isInView ? { pathLength: 1, opacity: 0.3 } : { pathLength: 0, opacity: 0 }}
+              transition={{ duration: 1.5, delay: 0.7 }}
+            />
+            <defs>
+              <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="rgb(249, 115, 22)" />
+                <stop offset="100%" stopColor="rgb(168, 85, 247)" />
+              </linearGradient>
+              <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="rgb(168, 85, 247)" />
+                <stop offset="100%" stopColor="rgb(59, 130, 246)" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        
+        <div className="grid md:grid-cols-3 gap-8 relative">
           {[
             {
-              icon: Grid3x3,
+              icon: Search,
               title: 'Pixel Analysis',
+              badge: 'Forensic',
+              badgeBg: 'bg-orange-100 dark:bg-orange-950/50',
+              badgeText: 'text-orange-700 dark:text-orange-300',
               desc: 'Advanced algorithms examine pixel-level inconsistencies and artifacts that indicate synthetic content generation.',
-              gradient: 'from-orange-500 to-rose-500',
-              glowColor: 'orange-500',
-              bg: 'bg-orange-50 dark:bg-orange-950/20',
+              gradient: 'from-orange-400 to-red-500',
+              glowColor: '249, 115, 22',
+              bg: 'bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20',
               border: 'border-orange-300 dark:border-orange-700',
               direction: 'x',
               start: -60
             },
             {
-              icon: Brain,
+              icon: Network,
               title: 'Neural Networks',
+              badge: 'ML Engine',
+              badgeBg: 'bg-purple-100 dark:bg-purple-950/50',
+              badgeText: 'text-purple-700 dark:text-purple-300',
               desc: 'Deep learning models trained on millions of samples to detect even the most sophisticated deepfake techniques.',
               gradient: 'from-purple-500 to-pink-500',
-              glowColor: 'purple-500',
-              bg: 'bg-purple-50 dark:bg-purple-950/20',
+              glowColor: '168, 85, 247',
+              bg: 'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20',
               border: 'border-purple-300 dark:border-purple-700',
               direction: 'y',
               start: 60
             },
             {
-              icon: Zap,
+              icon: Timer,
               title: 'Real-time Processing',
+              badge: 'Speed',
+              badgeBg: 'bg-blue-100 dark:bg-blue-950/50',
+              badgeText: 'text-blue-700 dark:text-blue-300',
               desc: 'Lightning-fast analysis delivers results in under 5 seconds, perfect for high-volume workflows.',
-              gradient: 'from-blue-500 to-cyan-500',
-              glowColor: 'blue-500',
-              bg: 'bg-blue-50 dark:bg-blue-950/20',
+              gradient: 'from-sky-400 to-blue-600',
+              glowColor: '59, 130, 246',
+              bg: 'bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-950/20 dark:to-blue-950/20',
               border: 'border-blue-300 dark:border-blue-700',
               direction: 'x',
               start: 60
@@ -872,30 +968,58 @@ function HowItWorksSection() {
                 initial={{ opacity: 0, [item.direction as 'x' | 'y']: item.start }}
                 animate={isInView ? { opacity: 1, [item.direction as 'x' | 'y']: 0 } : { opacity: 0, [item.direction as 'x' | 'y']: item.start }}
                 transition={{ duration: 0.6, delay: 0.2 + index * 0.1 }}
+                whileHover={{ scale: 1.02, y: -8 }}
                 className={`${item.bg} p-8 rounded-3xl border-2 ${item.border} relative group overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300`}
               >
+                {/* Gradient overlay on hover */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500 rounded-3xl`} />
+                
+                {/* Glow effect */}
                 <div
                   className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                   style={{
-                    boxShadow: `0 0 30px rgba(${
-                      item.glowColor === 'orange-500' ? '249, 115, 22' : item.glowColor === 'purple-500' ? '168, 85, 247' : '59, 130, 246'
-                    }, 0.5)`
+                    boxShadow: `0 0 40px rgba(${item.glowColor}, 0.4)`
                   }}
                 />
+                
+                {/* Noise texture */}
+                <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03] mix-blend-overlay pointer-events-none" style={{
+                  backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")'
+                }} />
+                
+                {/* Diagonal accent */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/20 to-transparent dark:from-white/5 rounded-bl-[100px] opacity-50" />
+                
                 <div className="relative z-10">
+                  {/* Floating icon with subtle animation */}
                   <motion.div
-                    className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-6 shadow-xl`}
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    transition={{ duration: 0.3 }}
+                    className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-6 shadow-2xl relative`}
+                    whileHover={{ scale: 1.1, y: -4 }}
+                    animate={{ y: [0, -4, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                   >
-                    <Icon className="w-8 h-8 text-white" />
+                    <Icon className="w-10 h-10 text-white" strokeWidth={2.5} />
+                    {/* Icon glow */}
+                    <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${item.gradient} blur-xl opacity-50`} />
                   </motion.div>
-                  <h3 className="text-2xl text-gray-900 dark:text-white mb-4">{item.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{item.desc}</p>
+                  
+                  {/* Title with badge */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <h3 className={`text-2xl font-bold bg-gradient-to-r ${item.gradient} bg-clip-text text-transparent`}>
+                      {item.title}
+                    </h3>
+                    <span className={`text-xs font-semibold ${item.badgeBg} ${item.badgeText} px-2.5 py-1 rounded-full`}>
+                      {item.badge}
+                    </span>
+                  </div>
+                  
+                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
+                    {item.desc}
+                  </p>
                 </div>
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-white/20 to-transparent dark:from-white/5 rounded-bl-3xl opacity-50" />
-                <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-white/20 to-transparent dark:from-white/5 rounded-tr-3xl opacity-50" />
+                
+                {/* Bottom accent */}
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-white/20 to-transparent dark:from-white/5 rounded-tr-[100px] opacity-50" />
               </motion.div>
             )
           })}
@@ -987,10 +1111,10 @@ function WhySeroSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: false, margin: '-100px' })
   const stats = [
-    { value: '99.2%', label: 'Accuracy Rate', desc: 'Industry-leading precision', color: 'orange' },
-    { value: '<5s', label: 'Detection Speed', desc: 'Lightning-fast results', color: 'purple' },
-    { value: '10M+', label: 'Files Analyzed', desc: 'Trusted worldwide', color: 'blue' },
-    { value: '24/7', label: 'Support', desc: 'Always here to help', color: 'green' }
+    { value: '90%+', label: 'Precision (high-signal)', desc: 'On strong evidence cases', color: 'orange' },
+    { value: '8–12s', label: 'Detection Speed', desc: 'Typical end-to-end time', color: 'purple' },
+    { value: '3K+', label: 'Videos Trained', desc: 'Supervised fusion model', color: 'blue' },
+    { value: 'Weekdays', label: 'Support', desc: 'Email-based assistance', color: 'green' }
   ] as const
   return (
     <section ref={ref} className="py-24 bg-white dark:bg-slate-950">
@@ -1078,8 +1202,16 @@ function GlobalSection() {
       </div>
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <motion.div initial={{ opacity: 0, scale: 0.8, x: -60 }} animate={isInView ? { opacity: 1, scale: 1, x: 0 } : { opacity: 0, scale: 0.8, x: -60 }} transition={{ duration: 0.8 }} className="flex justify-center">
-            <RealisticGlobe />
+          <motion.div initial={{ opacity: 0, scale: 0.8, x: -60 }} animate={isInView ? { opacity: 1, scale: 1, x: 0 } : { opacity: 0, scale: 0.8, x: -60 }} transition={{ duration: 0.8 }} className="flex justify-center w-full">
+            {/* <SeroGlobe className="h-[420px] w-full md:h-[520px]" /> */}
+            <div className="h-[420px] w-full md:h-[520px] flex items-center justify-center bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-3xl border border-white/10">
+              <div className="text-center">
+                <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400/30 to-purple-400/30 animate-pulse" />
+                </div>
+                <p className="text-white/60 text-lg">Global Visualization</p>
+              </div>
+            </div>
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 60 }} animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 60 }} transition={{ duration: 0.6 }}>
             <h2
@@ -1089,14 +1221,14 @@ function GlobalSection() {
               Trusted <span className="bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">Globally</span>
             </h2>
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              Protecting authenticity for organizations across 120+ countries. From media companies to government agencies, Sero is the trusted choice for deepfake detection.
+              Piloted with teams across 15+ countries. Designed for media teams, researchers, and developers who need practical, explainable detection.
             </p>
             <div className="grid grid-cols-2 gap-6">
               {[
-                { number: '120+', label: 'Countries' },
-                { number: '500+', label: 'Enterprise Clients' },
-                { number: '99.9%', label: 'Uptime' },
-                { number: '10M+', label: 'Daily Scans' }
+                { number: '15+', label: 'Countries' },
+                { number: '20+', label: 'Teams Using' },
+                { number: '99.0%', label: 'Uptime (dev)' },
+                { number: '10K+', label: 'Total Scans' }
               ].map((stat, index) => (
                 <motion.div
                   key={index}
@@ -1154,10 +1286,10 @@ function DashboardSection() {
             <h3 className="text-2xl text-gray-900 dark:text-white mb-8">Real-time Analytics</h3>
             <div className="space-y-6">
               {[
-                { label: 'Detection Rate', value: '99.2%', color: 'bg-green-500', width: '85%' },
-                { label: 'Processing Speed', value: '4.2s avg', color: 'bg-blue-500', width: '75%' },
-                { label: 'Files Scanned Today', value: '1,247', color: 'bg-purple-500', width: '65%' },
-                { label: 'Threats Blocked', value: '23', color: 'bg-red-500', width: '55%' }
+                { label: 'Precision (high-signal)', value: '90%+', color: 'bg-green-500', width: '75%' },
+                { label: 'Processing Speed', value: '8.4s avg', color: 'bg-blue-500', width: '65%' },
+                { label: 'Files Scanned Today', value: '127', color: 'bg-purple-500', width: '45%' },
+                { label: 'Flags Raised', value: '3', color: 'bg-red-500', width: '35%' }
               ].map((metric) => (
                 <div key={metric.label}>
                   <div className="flex items-center justify-between mb-2">

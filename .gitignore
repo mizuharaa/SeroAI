@@ -32,6 +32,9 @@ build/
 uploads/
 data/cache/
 data/*.db
+data/training/*.csv
+models/*.pkl
+models/*.json
 
 # Uploads
 uploads/

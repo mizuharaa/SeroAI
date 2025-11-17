@@ -15,6 +15,7 @@ from app.service import analyze_media
 from core.feedback_store import store_feedback
 from app.analysis_manager import start_job, get_job
 from app.result_formatter import build_ui_response
+from core.fusion import DeepfakeFusion
 
 # ----------------------------
 # Reduce noisy runtime logs
@@ -43,6 +44,9 @@ app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'mp4', 'mov', 'avi'}
 
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Warm up fusion model at startup so users see a clear log line
+_ = DeepfakeFusion()
 
 def allowed_file(filename: str) -> bool:
     return bool(filename) and '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']

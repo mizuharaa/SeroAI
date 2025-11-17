@@ -19,11 +19,33 @@ interface ResultsDisplayProps {
   fileName: string;
   processingTime: number;
   generatorHint?: string;
+  feedbackId?: string;
 }
 
 const iconMap = { eye: Eye, zap: Zap, waves: Waves, box: Box, audio: AudioWaveform, grid: Grid3x3 };
 
-export function ResultsDisplay({ overallScore, results, fileName, processingTime, generatorHint }: ResultsDisplayProps) {
+export function ResultsDisplay({ overallScore, results, fileName, processingTime, generatorHint, feedbackId }: ResultsDisplayProps) {
+  const [userChoice, setUserChoice] = React.useState<'AI' | 'REAL' | null>(null)
+  const [notes, setNotes] = React.useState('')
+  const [sent, setSent] = React.useState(false)
+  const [sending, setSending] = React.useState(false)
+
+  async function submitFeedback() {
+    if (!feedbackId || !userChoice || sending) return
+    setSending(true)
+    try {
+      await fetch('/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feedbackId, userLabel: userChoice, notes })
+      })
+      setSent(true)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setSending(false)
+    }
+  }
   const getScoreColor = (score: number) => {
     if (score <= 20) return 'text-green-600';
     if (score <= 40) return 'text-lime-600';
@@ -158,6 +180,69 @@ export function ResultsDisplay({ overallScore, results, fileName, processingTime
           })}
         </div>
       </Card>
+
+      {feedbackId && (
+        <Card className="p-6 space-y-4">
+          <h3 className="text-gray-900">Was this result correct?</h3>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant={userChoice === 'REAL' ? 'default' : 'outline'}
+              onClick={() => setUserChoice('REAL')}
+              className={userChoice === 'REAL' ? '' : 'bg-white dark:bg-slate-900'}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Real / Authentic
+            </Button>
+            <Button
+              variant={userChoice === 'AI' ? 'default' : 'outline'}
+              onClick={() => setUserChoice('AI')}
+              className={userChoice === 'AI' ? '' : 'bg-white dark:bg-slate-900'}
+            >
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              AI / Deepfake
+            </Button>
+          </div>
+          {userChoice && !sent && (
+            <div className="relative">
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Optional: Add a short note (weighs lightly and helps the model focus on real errors)"
+                className="w-full h-24 p-3 rounded-lg border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-orange-500"
+                maxLength={300}
+              />
+              {/* playful caret animation */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute top-3 left-3 h-4 w-0.5 bg-orange-500 opacity-60 animate-[caret-wiggle_1.8s_ease-in-out_infinite]"
+              />
+              <style>{`
+                @keyframes caret-wiggle {
+                  0% { transform: translateX(0); opacity: .3; }
+                  20% { transform: translateX(8px); opacity: .6; }
+                  40% { transform: translateX(2px); opacity: .4; }
+                  60% { transform: translateX(12px); opacity: .7; }
+                  80% { transform: translateX(4px); opacity: .5; }
+                  100% { transform: translateX(0); opacity: .3; }
+                }
+              `}</style>
+              <div className="mt-3 flex items-center gap-3">
+                <Button onClick={submitFeedback} disabled={sending} className="px-5">
+                  {sending ? 'Sending...' : 'Submit Feedback'}
+                </Button>
+                <p className="text-xs text-gray-500">
+                  Feedback slightly re-weights signals over time. Obvious noise is ignored.
+                </p>
+              </div>
+            </div>
+          )}
+          {sent && (
+            <div className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg p-3">
+              Thank you — your feedback has been recorded.
+            </div>
+          )}
+        </Card>
+      )}
     </div>
   );
 }
