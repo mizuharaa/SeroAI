@@ -1,7 +1,12 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, animate } from 'framer-motion'
 import {
   Shield,
+  ShieldAlert,
+  ScanFace,
+  Activity,
+  Workflow,
+  EyeOff,
   ArrowRight,
   Zap,
   Grid3x3,
@@ -25,7 +30,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import { Twitter, Github, Linkedin } from 'lucide-react'
-// import { SeroGlobe } from './components/SeroGlobe'
+import { SimpleGlobe } from './components/SimpleGlobe'
 import { UploadZone } from './components/UploadZone'
 import { AnalysisProgress } from './components/AnalysisProgress'
 import { ResultsDisplay } from './components/ResultsDisplay'
@@ -84,7 +89,7 @@ export default function App() {
     }
   }
   const [isDarkMode, setIsDarkMode] = useState<boolean>(getInitialTheme)
-  const [nextDarkMode, setNextDarkMode] = useState<boolean | null>(null) // Track the target theme during transition
+  const [themeTransitionTarget, setThemeTransitionTarget] = useState<'dark' | 'light' | null>(null)
   const [scrolled, setScrolled] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [isTransitioning, setIsTransitioning] = useState(false)
@@ -105,8 +110,7 @@ export default function App() {
     const html = document.documentElement
     const newDark = !html.classList.contains('dark')
 
-    // Preview target theme in the transition overlay only
-    setNextDarkMode(newDark)
+    setThemeTransitionTarget(newDark ? 'dark' : 'light')
     setIsTransitioning(true)
 
     // Apply the actual theme after the animation finishes
@@ -122,7 +126,7 @@ export default function App() {
       } catch {}
       setIsDarkMode(newDark)
       setIsTransitioning(false)
-      setNextDarkMode(null)
+      setThemeTransitionTarget(null)
     }, ANIM_MS)
   }
 
@@ -158,8 +162,8 @@ export default function App() {
 
   // (handler defined above)
 
-  // Use nextDarkMode during transition, fallback to isDarkMode
-  const displayDarkMode = nextDarkMode !== null ? nextDarkMode : isDarkMode
+  const overlayTheme = themeTransitionTarget ?? (isDarkMode ? 'dark' : 'light')
+  const overlayColorClass = overlayTheme === 'dark' ? 'bg-slate-950' : 'bg-white'
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950">
@@ -169,7 +173,7 @@ export default function App() {
             initial={{ clipPath: 'circle(0% at 100% 0%)' }}
             animate={{ clipPath: 'circle(150% at 100% 0%)' }}
             transition={{ duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }}
-            className={`fixed inset-0 z-[100] pointer-events-none ${displayDarkMode ? 'bg-slate-950' : 'bg-white'}`}
+            className={`fixed inset-0 z-[100] pointer-events-none ${overlayColorClass}`}
           />
           <div className="fixed inset-0 z-[101] flex items-center justify-center pointer-events-none">
             <motion.div className="relative">
@@ -1203,15 +1207,7 @@ function GlobalSection() {
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <motion.div initial={{ opacity: 0, scale: 0.8, x: -60 }} animate={isInView ? { opacity: 1, scale: 1, x: 0 } : { opacity: 0, scale: 0.8, x: -60 }} transition={{ duration: 0.8 }} className="flex justify-center w-full">
-            {/* <SeroGlobe className="h-[420px] w-full md:h-[520px]" /> */}
-            <div className="h-[420px] w-full md:h-[520px] flex items-center justify-center bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-3xl border border-white/10">
-              <div className="text-center">
-                <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400/30 to-purple-400/30 animate-pulse" />
-                </div>
-                <p className="text-white/60 text-lg">Global Visualization</p>
-              </div>
-            </div>
+            <SimpleGlobe className="h-[420px] w-full md:h-[520px] rounded-3xl overflow-hidden" />
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 60 }} animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 60 }} transition={{ duration: 0.6 }}>
             <h2
@@ -1253,146 +1249,323 @@ function GlobalSection() {
 
 function DashboardSection() {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: false, margin: '-100px' })
+  const isInView = useInView(ref, { once: false, margin: '-120px' })
+  const [detectionsToday, setDetectionsToday] = useState(0)
+
+  useEffect(() => {
+    if (!isInView) return
+    const controls = animate(0, 248, {
+      duration: 1.4,
+      ease: 'easeOut',
+      onUpdate: (value) => setDetectionsToday(Math.round(value))
+    })
+    return () => controls.stop()
+  }, [isInView])
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 24 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { staggerChildren: 0.08, delayChildren: 0.1 }
+    }
+  }
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 24, scale: 0.96 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { type: 'spring', stiffness: 220, damping: 24 }
+    }
+  }
+
+  const aiScore = 0.82
+  const gaugeRadius = 42
+  const gaugeCircumference = 2 * Math.PI * gaugeRadius
+
+  const statCards = [
+    {
+      title: 'Detections today',
+      value: `${detectionsToday}`,
+      suffix: '',
+      badge: 'Live feed',
+      icon: ShieldAlert,
+      accent: 'text-amber-300',
+      description: 'Escalations surfaced by fusion engine in the last 24h.'
+    },
+    {
+      title: 'Accuracy (7d)',
+      value: '97.4%',
+      suffix: '',
+      badge: 'ML engine',
+      icon: Activity,
+      accent: 'text-emerald-300',
+      description: 'Precision on confirmed truth-set for the last 7 days.'
+    },
+    {
+      title: 'Avg analysis time',
+      value: '8.2s',
+      suffix: '',
+      badge: 'Speed',
+      icon: Workflow,
+      accent: 'text-sky-300',
+      description: 'End-to-end runtime per video including OCR + fusion.'
+    }
+  ] as const
+
   return (
-    <section ref={ref} className="py-24 bg-white dark:bg-slate-950">
-      <div className="max-w-7xl mx-auto px-6">
+    <section ref={ref} className="relative py-24 bg-[#050B18] text-white overflow-hidden">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 opacity-70 bg-[radial-gradient(circle_at_top,_rgba(10,15,31,0.85),_#050B18_70%)]" />
+        <div
+          className="absolute inset-0 opacity-30"
+          style={{
+            backgroundImage:
+              'linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(0deg, rgba(255,255,255,0.04) 1px, transparent 1px)',
+            backgroundSize: '120px 120px'
+          }}
+        />
+        <div className="hidden lg:block absolute left-32 top-40 w-64 h-64 border border-cyan-400/20 rounded-full blur-3xl" />
+        <div className="hidden lg:block absolute right-10 bottom-16 w-80 h-80 border border-pink-400/10 rounded-full blur-3xl" />
+      </div>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate={isInView ? 'visible' : 'hidden'}
+        className="relative max-w-7xl mx-auto px-6"
+      >
         <div className="text-center mb-16">
-          <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            transition={{ duration: 0.6 }}
-            className="text-5xl lg:text-7xl text-gray-900 dark:text-white mb-6 tracking-tight"
-            style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 900 }}
+          <motion.span
+            className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3.5 py-1 text-sm font-medium text-emerald-300"
+            variants={cardVariants}
           >
-            Powerful <span className="bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">Dashboard</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
+            Live monitoring
+          </motion.span>
+          <motion.h2
+            className="mt-5 text-4xl md:text-5xl lg:text-6xl font-black tracking-tight"
+            variants={cardVariants}
+            style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+          >
+            Stripe-level polish for your{' '}
+            <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent">detection cockpit</span>
           </motion.h2>
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto"
+            className="mt-4 text-lg text-slate-300 max-w-3xl mx-auto"
+            variants={cardVariants}
           >
-            Monitor, analyze, and manage all your deepfake detection operations in one place
+            A handcrafted dashboard tuned for analysts: verdict certainty, anomaly context, and workflow signals in one responsive hero surface.
           </motion.p>
         </div>
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] items-start">
           <motion.div
-            initial={{ opacity: 0, y: 60 }}
-            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-gray-200 dark:border-slate-800 shadow-xl"
+            variants={cardVariants}
+            whileHover={{ scale: 1.03, translateY: -4 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+            className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0C1429]/80 p-8 shadow-[0_25px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl"
           >
-            <h3 className="text-2xl text-gray-900 dark:text-white mb-8">Real-time Analytics</h3>
-            <div className="space-y-6">
-              {[
-                { label: 'Precision (high-signal)', value: '90%+', color: 'bg-green-500', width: '75%' },
-                { label: 'Processing Speed', value: '8.4s avg', color: 'bg-blue-500', width: '65%' },
-                { label: 'Files Scanned Today', value: '127', color: 'bg-purple-500', width: '45%' },
-                { label: 'Flags Raised', value: '3', color: 'bg-red-500', width: '35%' }
-              ].map((metric) => (
-                <div key={metric.label}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-600 dark:text-gray-400">{metric.label}</span>
-                    <span className="text-gray-900 dark:text-white">{metric.value}</span>
+            <div className="absolute inset-0 pointer-events-none opacity-60">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(19,114,255,0.25),_transparent_55%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(255,85,132,0.2),_transparent_60%)]" />
+            </div>
+            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center">
+              <div className="flex-1">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-amber-500/15 px-3 py-1 text-sm font-semibold text-amber-200">
+                    <Shield className="h-4 w-4" />
+                    Verdict: AI
+                  </span>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-cyan-500/10 px-3 py-1 text-xs uppercase tracking-wide text-cyan-200">
+                    Forensic
+                  </span>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-purple-500/10 px-3 py-1 text-xs uppercase tracking-wide text-purple-200">
+                    ML Engine
+                  </span>
+                </div>
+                <h3 className="mt-5 text-3xl font-bold text-white">Detection overview</h3>
+                <p className="mt-2 text-slate-300">
+                  Fusion model aggregated 42 signals. Motion logic, watermark OCR, and PRNU mismatch registered as high-confidence anomalies.
+                </p>
+                <div className="mt-6">
+                  <div className="flex items-center justify-between text-xs font-medium text-slate-400">
+                    <span>AI probability</span>
+                    <span className="text-slate-200">{Math.round(aiScore * 100)}%</span>
                   </div>
-                  <div className="h-2 bg-gray-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div className="relative mt-2 h-3 overflow-hidden rounded-full bg-slate-800/60">
                     <motion.div
                       initial={{ width: '0%' }}
-                      animate={isInView ? { width: metric.width } : { width: '0%' }}
-                      transition={{ duration: 1, delay: 0.5 }}
-                      className={`h-full ${metric.color} rounded-full`}
+                      animate={isInView ? { width: `${aiScore * 100}%` } : { width: '0%' }}
+                      transition={{ duration: 0.9, delay: 0.2 }}
+                      className="h-full rounded-full bg-gradient-to-r from-amber-400 via-pink-500 to-purple-500 shadow-[0_0_20px_rgba(255,90,135,0.6)]"
                     />
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={isInView ? { opacity: 1, x: `${aiScore * 100}%` } : { opacity: 0, x: 0 }}
+                      transition={{ duration: 0.9, delay: 0.35 }}
+                      className="absolute top-1/2 -translate-y-1/2 translate-x-[-50%]"
+                    >
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white shadow-lg backdrop-blur">
+                        <Sparkles className="h-3 w-3" />
+                      </span>
+                    </motion.span>
                   </div>
+                </div>
+                <div className="mt-8">
+                  <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    <span>Confidence stream</span>
+                    <span>Last 90s</span>
+                  </div>
+                  <svg viewBox="0 0 180 50" className="mt-3 h-20 w-full">
+                    <defs>
+                      <linearGradient id="sparklineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.1" />
+                        <stop offset="60%" stopColor="#fb7185" stopOpacity="0.6" />
+                        <stop offset="100%" stopColor="#c084fc" stopOpacity="0.9" />
+                      </linearGradient>
+                    </defs>
+                    <motion.path
+                      d="M0 40 L25 32 L50 36 L75 18 L100 25 L125 12 L150 28 L175 14"
+                      fill="none"
+                      stroke="url(#sparklineGradient)"
+                      strokeWidth={2.5}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      initial={{ strokeDasharray: 260, strokeDashoffset: 260 }}
+                      animate={isInView ? { strokeDashoffset: 0 } : { strokeDashoffset: 260 }}
+                      transition={{ duration: 1.4, delay: 0.3 }}
+                    />
+                    <motion.circle
+                      r={4}
+                      fill="#f472b6"
+                      initial={{ opacity: 0, cx: 0, cy: 40 }}
+                      animate={
+                        isInView
+                          ? {
+                              opacity: 1,
+                              cx: [0, 25, 50, 75, 100, 125, 150, 175],
+                              cy: [40, 32, 36, 18, 25, 12, 28, 14]
+                            }
+                          : { opacity: 0, cx: 0, cy: 40 }
+                      }
+                      transition={{ duration: 3.2, ease: 'easeInOut', repeat: Infinity, repeatDelay: 0.6 }}
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div className="relative flex-shrink-0">
+                <div className="mx-auto flex h-44 w-44 items-center justify-center rounded-3xl border border-white/10 bg-slate-900/40 p-4 shadow-inner">
+                  <svg viewBox="0 0 120 120" className="h-full w-full">
+                    <circle cx="60" cy="60" r={gaugeRadius} stroke="rgba(255,255,255,0.12)" strokeWidth="10" fill="transparent" />
+                    <motion.circle
+                      cx="60"
+                      cy="60"
+                      r={gaugeRadius}
+                      stroke="url(#gaugeStroke)"
+                      strokeWidth="10"
+                      strokeLinecap="round"
+                      fill="transparent"
+                      strokeDasharray={gaugeCircumference}
+                      initial={{ strokeDashoffset: gaugeCircumference }}
+                      animate={isInView ? { strokeDashoffset: gaugeCircumference * (1 - aiScore) } : { strokeDashoffset: gaugeCircumference }}
+                      transition={{ duration: 1.2, ease: 'easeOut' }}
+                    />
+                    <defs>
+                      <linearGradient id="gaugeStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#fb923c" />
+                        <stop offset="50%" stopColor="#fb7185" />
+                        <stop offset="100%" stopColor="#a855f7" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Confidence</p>
+                    <p className="text-4xl font-bold text-white">{Math.round(aiScore * 100)}%</p>
+                    <p className="text-sm text-slate-400">Hard AI evidence</p>
+                  </motion.div>
+                </div>
+              </div>
+            </div>
+            <div className="relative mt-10 grid gap-6 text-sm text-slate-300 md:grid-cols-3">
+              {[
+                { label: 'Watermark OCR', value: 'SORA • persistent', accent: 'text-amber-200' },
+                { label: 'Scene logic', value: 'Discontinuous motion', accent: 'text-cyan-200' },
+                { label: 'Optical flow', value: 'Flicker + rPPG drift', accent: 'text-purple-200' }
+              ].map((item) => (
+                <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                  <p className="text-xs uppercase tracking-wide text-slate-400">{item.label}</p>
+                  <p className={`mt-1 text-base font-semibold ${item.accent}`}>{item.value}</p>
                 </div>
               ))}
             </div>
           </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 60 }}
-            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
-            className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-gray-200 dark:border-slate-800 shadow-xl"
-          >
-            <h3 className="text-2xl text-gray-900 dark:text-white mb-8">Detection Methods</h3>
-            <div className="space-y-4">
-              {[
-                { name: 'Pixel Stability', desc: 'Analyzes temporal consistency', color: 'blue', icon: Grid3x3 },
-                { name: 'Optical Flow', desc: 'Examines motion patterns', color: 'purple', icon: Zap },
-                { name: 'Spatial Logic', desc: 'Checks scene coherence', color: 'green', icon: Brain },
-                { name: 'Frequency Analysis', desc: 'Detects GAN signatures', color: 'pink', icon: Gauge },
-                { name: 'Audio Sync', desc: 'Verifies audio authenticity', color: 'orange', icon: CheckCircle2 }
-              ].map((method, index) => {
-                const Icon = method.icon
-                return (
+          <div className="space-y-6">
+            {statCards.map((card, index) => {
+              const Icon = card.icon
+              return (
+                <motion.div
+                  key={card.title}
+                  variants={cardVariants}
+                  whileHover={{ scale: 1.03, translateY: -4 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                  className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0D152D]/80 p-6 shadow-[0_18px_45px_rgba(0,0,0,0.55)] backdrop-blur-lg"
+                >
                   <motion.div
-                    key={method.name}
-                    initial={{ opacity: 0, x: 40 }}
-                    animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 40 }}
-                    transition={{ duration: 0.5, delay: 0.5 + index * 0.08 }}
-                    className={`p-6 rounded-2xl border-2 ${
-                      method.color === 'blue'
-                        ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-300 dark:border-blue-800'
-                        : method.color === 'purple'
-                        ? 'bg-purple-50 dark:bg-purple-950/20 border-purple-300 dark:border-purple-800'
-                        : method.color === 'green'
-                        ? 'bg-green-50 dark:bg-green-950/20 border-green-300 dark:border-green-800'
-                        : method.color === 'pink'
-                        ? 'bg-pink-50 dark:bg-pink-950/20 border-pink-300 dark:border-pink-800'
-                        : 'bg-orange-50 dark:bg-orange-950/20 border-orange-300 dark:border-orange-800'
-                    }`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div
-                        className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          method.color === 'blue'
-                            ? 'bg-blue-500'
-                            : method.color === 'purple'
-                            ? 'bg-purple-500'
-                            : method.color === 'green'
-                            ? 'bg-green-500'
-                            : method.color === 'pink'
-                            ? 'bg-pink-500'
-                            : 'bg-orange-500'
-                        }`}
-                      >
-                        <Icon className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-lg text-gray-900 dark:text-white mb-1">{method.name}</h4>
-                        <p className="text-gray-600 dark:text-gray-400">{method.desc}</p>
-                      </div>
+                    className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br from-cyan-400/20 to-purple-500/10 blur-3xl"
+                    animate={isInView ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+                    transition={{ duration: 6, repeat: Infinity, repeatType: 'mirror' }}
+                    aria-hidden
+                  />
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-slate-200">
+                        {card.badge}
+                      </span>
+                      <p className="mt-3 text-2xl font-semibold text-white">
+                        {card.value}
+                        {card.suffix}
+                      </p>
+                      <p className="text-sm text-slate-400">{card.description}</p>
                     </div>
+                    <motion.div
+                      className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-700/60 bg-slate-900/60 shadow-inner"
+                      animate={isInView ? { y: [-4, 0, -4] } : { y: 0 }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                      <Icon className={`h-5 w-5 ${card.accent}`} />
+                    </motion.div>
+                  </div>
+                  <div className="mt-5 flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
+                    <div className="flex items-center gap-1">
+                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                      Stable
+                    </div>
+                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                    <EyeOff className="h-4 w-4 text-slate-500" />
+                    Noise gated
+                  </div>
+                  <motion.div
+                    className="absolute bottom-4 right-4 flex flex-col gap-1.5 text-[10px] uppercase tracking-[0.2em] text-white/30"
+                    animate={isInView ? { opacity: [0.5, 0.8, 0.5] } : { opacity: 0.4 }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                    aria-hidden
+                  >
+                    <span>01 · 10</span>
+                    <span>DATA FLOW</span>
                   </motion.div>
-                )
-              })}
-            </div>
-          </motion.div>
+                </motion.div>
+              )
+            })}
+          </div>
         </div>
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          className="flex justify-center gap-4 mt-12"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05, y: -3 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl flex items-center gap-2 shadow-lg shadow-green-500/30 hover:shadow-green-500/50 transition-shadow"
-          >
-            <CheckCircle2 className="w-5 h-5" />
-            <span>Real / Authentic</span>
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05, y: -3 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-xl flex items-center gap-2 shadow-lg shadow-red-500/30 hover:shadow-red-500/50 transition-shadow"
-          >
-            <X className="w-5 h-5" />
-            <span>AI / Deepfake</span>
-          </motion.button>
-        </motion.div>
-      </div>
+      </motion.div>
     </section>
   )
 }

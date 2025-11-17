@@ -9,8 +9,8 @@
     "preview": "vite preview --port 5174"
   },
   "dependencies": {
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.4.0",
+    "@react-three/drei": "^9.109.5",
+    "@react-three/fiber": "^8.13.7",
     "clsx": "^2.1.1",
     "framer-motion": "^11.0.0",
     "lucide-react": "^0.462.0",
@@ -19,11 +19,13 @@
     "react-dom": "^18.2.0",
     "sonner": "^2.0.3",
     "tailwind-merge": "^2.3.0",
-    "three": "^0.181.1"
+    "three": "^0.181.1",
+    "topojson-client": "^3.1.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.8",
+    "@types/topojson-client": "^3.1.5",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",
