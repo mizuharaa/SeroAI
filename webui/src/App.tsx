@@ -27,7 +27,13 @@ import {
   Search,
   Network,
   Timer,
-  Sparkles
+  Sparkles,
+  ScanLine,
+  Orbit,
+  Box,
+  Signal,
+  Headphones,
+  FileVideo
 } from 'lucide-react'
 import { Twitter, Github, Linkedin } from 'lucide-react'
 import { SimpleGlobe } from './components/SimpleGlobe'
@@ -752,84 +758,182 @@ function AIDetectionDemo() {
         if (prev >= 100) return 0
         return prev + 1
       })
-    }, 100)
+    }, 90)
     return () => clearInterval(interval)
   }, [])
+
   const detectionMethods = [
-    { name: 'Pixel Stability', color: 'bg-blue-500', icon: Grid3x3 },
-    { name: 'Optical Flow', color: 'bg-emerald-500', icon: Zap },
-    { name: 'Spatial Logic', color: 'bg-green-500', icon: Brain },
-    { name: 'Frequency Analysis', color: 'bg-purple-500', icon: Gauge },
-    { name: 'Audio Sync', color: 'bg-pink-500', icon: CheckCircle2 },
-    { name: 'Face Analysis', color: 'bg-orange-500', icon: Shield }
+    { name: 'Pixel Stability', icon: ScanLine, badge: 'Temporal', desc: 'Frame parity and texture drift' },
+    { name: 'Optical Flow', icon: Orbit, badge: 'Motion', desc: 'Vector coherence and flicker' },
+    { name: 'Spatial Logic', icon: Box, badge: 'Scene', desc: 'Object persistence and physics' },
+    { name: 'Frequency Analysis', icon: Signal, badge: 'Spectral', desc: 'GAN signatures and noise' },
+    { name: 'Audio Sync', icon: Headphones, badge: 'A/V', desc: 'Lip sync and rPPG alignment' },
+    { name: 'Face Analysis', icon: ScanFace, badge: 'Forensic', desc: 'Landmarks and biometrics' }
   ] as const
+
+  const perStep = 100 / detectionMethods.length
+
   return (
     <div className="relative">
-      <div className="relative bg-white/90 dark:bg-slate-900/90 rounded-3xl p-8 border border-gray-200 dark:border-slate-700 shadow-xl">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h3 className="text-gray-900 dark:text.white dark:text-white">Analyzing Media</h3>
-              <p className="text-gray-600 dark:text-gray-400">demo_video.mp4</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-gray-600 dark:text-gray-400">Progress</p>
-            <p className="text-2xl text-gray-900 dark:text-white">{progress}%</p>
-          </div>
-        </div>
-        <div className="mb-8">
-          <div className="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-orange-500 to-pink-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          {detectionMethods.map((method, index) => {
-            const Icon = method.icon
-            const isComplete = progress > (index / detectionMethods.length) * 100
-            return (
-              <div
-                key={method.name}
-                className={`p-4 rounded-xl border transition-colors duration-300 ${
-                  isComplete
-                    ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800'
-                    : 'bg-gray-50 dark:bg-slate-800/50 border-gray-200 dark:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg ${method.color} flex items-center justify-center flex-shrink-0`}>
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900 dark:text-white truncate">{method.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{isComplete ? 'Complete' : 'Pending'}</p>
-                  </div>
-                  {isComplete && <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />}
+      <div className="absolute -inset-6 rounded-[32px] bg-gradient-to-r from-orange-400/20 via-pink-500/15 to-purple-500/20 blur-3xl" />
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        className="relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-white/95 via-white/85 to-white/70 dark:from-slate-900/90 dark:via-slate-950/85 dark:to-slate-900/75 p-8 shadow-[0_35px_120px_rgba(15,23,42,0.45)] backdrop-blur-xl dark:border-white/5"
+      >
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.15]"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at 1px 1px, rgba(15,23,42,0.25) 1px, transparent 0), linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 60%)',
+            backgroundSize: '40px 40px, 200% 200%'
+          }}
+        />
+        <div className="relative space-y-8">
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-slate-600 dark:text-white/70">
+                Live analysis
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 shadow-lg shadow-orange-500/45">
+                  <FileVideo className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">File in review</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                    demo_video.mp4
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Media authenticity sweep</p>
                 </div>
               </div>
-            )
-          })}
-        </div>
-        <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-xl border border-blue-200 dark:border-blue-800">
-          <div className="flex items-center justify-between">
+              <motion.span
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-2 rounded-full bg-white/60 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm dark:bg-white/10 dark:text-white/70"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-pink-400 animate-ping" />
+                Sero core is active
+              </motion.span>
+            </div>
+            <div className="text-right">
+              <p className="text-xs uppercase tracking-[0.25em] text-gray-500 dark:text-gray-400">Progress</p>
+              <motion.p
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="text-5xl font-black text-gray-900 dark:text-white"
+                style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+              >
+                {progress}%
+              </motion.p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Signal quality {progress > 80 ? 'stable' : 'sampling'}</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="relative">
+              <div className="h-3 rounded-full bg-white/70 shadow-inner dark:bg-slate-900/60" />
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-white/40 to-transparent blur-xl opacity-70 pointer-events-none" />
+              <motion.div
+                className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 shadow-[0_0_30px_rgba(236,72,153,0.45)]"
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              />
+              <motion.div
+                className="absolute top-1/2 -translate-y-1/2 rounded-full bg-white shadow-lg shadow-pink-500/40 dark:bg-slate-950 flex items-center justify-center"
+                style={{ height: '18px', width: '18px' }}
+                animate={{ x: `calc(${progress}% - 9px)` }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <span className="h-2 w-2 rounded-full bg-gradient-to-r from-orange-500 to-pink-400 animate-pulse" />
+              </motion.div>
+            </div>
+            <div className="flex items-center justify-between text-xs uppercase tracking-[0.25em] text-gray-500 dark:text-gray-400">
+              <span>Signal correlation</span>
+              <span>{progress}% complete</span>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {detectionMethods.map((method, index) => {
+              const Icon = method.icon
+              const raw = progress - index * perStep
+              const pct = Math.max(0, Math.min((raw / perStep) * 100, 100))
+              const complete = pct >= 100
+              return (
+                <motion.div
+                  key={method.name}
+                  whileHover={{ scale: 1.015, translateY: -4 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 25 }}
+                  className="relative overflow-hidden rounded-2xl border border-white/30 bg-white/80 p-4 shadow-lg shadow-slate-900/10 dark:border-white/10 dark:bg-slate-900/60 dark:shadow-[0_15px_40px_rgba(0,0,0,0.55)] backdrop-blur"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900/70 border border-slate-800/80 text-white shadow-[0_10px_25px_rgba(0,0,0,0.35)] dark:bg-white/10 dark:border-white/20">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{method.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-300">{method.desc}</p>
+                    </div>
+                    <span className="ml-auto rounded-full bg-slate-900/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:bg-white/10 dark:text-white/70">
+                      {method.badge}
+                    </span>
+                  </div>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-800">
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600"
+                      animate={{ width: `${pct}%` }}
+                      transition={{ duration: 0.4 }}
+                    />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span>{complete ? 'Complete' : pct > 0 ? 'Analyzing' : 'Queued'}</span>
+                    <span>{Math.round(pct)}%</span>
+                  </div>
+                  {complete && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="absolute top-4 right-4 text-emerald-400"
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                    </motion.div>
+                  )}
+                </motion.div>
+              )
+            })}
+          </div>
+
+          <motion.div
+            whileHover={{ scale: 1.01 }}
+            className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-blue-200/70 bg-gradient-to-r from-blue-50/80 to-cyan-50/70 p-5 shadow-inner dark:border-blue-900/50 dark:bg-gradient-to-r dark:from-blue-900/40 dark:to-cyan-900/30"
+          >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white shadow-lg shadow-blue-500/40">
+                <Shield className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-gray-900 dark:text-white">Authenticity Score</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Analyzing video integrity</p>
+                <p className="text-base font-semibold text-gray-900 dark:text-white">Authenticity score</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Synth + watermark fusion underway</p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-3xl text-blue-600 dark:text-blue-400">{Math.min(Math.round(progress * 0.98), 98)}%</p>
+              <p className="text-4xl font-black text-blue-600 dark:text-cyan-300" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                {Math.min(Math.round(progress * 0.97), 99)}%
+              </p>
+              <p className="text-xs uppercase tracking-[0.3em] text-blue-500/70 dark:text-cyan-200">Integrity</p>
             </div>
+          </motion.div>
+          <div className="flex items-center gap-2 pt-2 text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            Sero is analyzing 6 independent signals in real time
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }
@@ -1349,14 +1453,14 @@ function DashboardSection() {
             variants={cardVariants}
             style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
           >
-            Stripe-level polish for your{' '}
-            <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent">detection cockpit</span>
+            Command-grade clarity for your{' '}
+            <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent">detection workflows</span>
           </motion.h2>
           <motion.p
             className="mt-4 text-lg text-slate-300 max-w-3xl mx-auto"
             variants={cardVariants}
           >
-            A handcrafted dashboard tuned for analysts: verdict certainty, anomaly context, and workflow signals in one responsive hero surface.
+            A handcrafted dashboard tuned for analysts, surfacing verdict certainty, anomaly context, and workflow readiness in one responsive surface.
           </motion.p>
         </div>
         <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] items-start">
@@ -1480,16 +1584,27 @@ function DashboardSection() {
                     </defs>
                   </svg>
                 </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <motion.div
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <motion.p
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={isInView ? { opacity: 0.85, y: 0 } : { opacity: 0, y: 6 }}
+                    transition={{ duration: 0.4 }}
+                    className="text-[0.65rem] uppercase tracking-[0.4em] text-slate-400"
+                  >
+                    Confidence
+                  </motion.p>
+                  <motion.p
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.6 }}
+                    className="text-4xl font-black text-white"
+                    style={{ textShadow: '0 3px 12px rgba(5,10,24,0.6)' }}
                   >
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Confidence</p>
-                    <p className="text-4xl font-bold text-white">{Math.round(aiScore * 100)}%</p>
-                    <p className="text-sm text-slate-400">Hard AI evidence</p>
-                  </motion.div>
+                    {Math.round(aiScore * 100)}%
+                  </motion.p>
+                  <span className="mt-1 rounded-full bg-white/10 px-3 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-white">
+                    Hard AI evidence
+                  </span>
                 </div>
               </div>
             </div>
