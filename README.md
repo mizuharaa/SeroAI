@@ -1,4 +1,4 @@
-# SeroAI — Real-Time Deepfake Defense Copilot
+# SeroAI — Real-Time Deepfake Defense Copilot by Daniel Tran
 
 Pull signal-level evidence out of video files, fuse it with a supervised model, and ship trustworthy verdicts without ever leaving your device.
 
