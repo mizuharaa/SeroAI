@@ -1559,7 +1559,17 @@ function DashboardSection() {
                 </div>
               </div>
               <div className="relative flex-shrink-0">
-                <div className="mx-auto flex h-44 w-44 items-center justify-center rounded-3xl border border-white/10 bg-slate-900/40 p-4 shadow-inner">
+                <div className="mb-3 text-center">
+                  <motion.p
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={isInView ? { opacity: 0.85, y: 0 } : { opacity: 0, y: -6 }}
+                    transition={{ duration: 0.4 }}
+                    className="text-[0.65rem] uppercase tracking-[0.4em] text-slate-400"
+                  >
+                    Confidence
+                  </motion.p>
+                </div>
+                <div className="relative mx-auto flex h-44 w-44 items-center justify-center rounded-3xl border border-white/10 bg-slate-900/40 p-4 shadow-inner">
                   <svg viewBox="0 0 120 120" className="h-full w-full">
                     <circle cx="60" cy="60" r={gaugeRadius} stroke="rgba(255,255,255,0.12)" strokeWidth="10" fill="transparent" />
                     <motion.circle
@@ -1583,28 +1593,20 @@ function DashboardSection() {
                       </linearGradient>
                     </defs>
                   </svg>
-                </div>
-                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <motion.p
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={isInView ? { opacity: 0.85, y: 0 } : { opacity: 0, y: 6 }}
-                    transition={{ duration: 0.4 }}
-                    className="text-[0.65rem] uppercase tracking-[0.4em] text-slate-400"
-                  >
-                    Confidence
-                  </motion.p>
-                  <motion.p
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.6 }}
-                    className="text-4xl font-black text-white"
-                    style={{ textShadow: '0 3px 12px rgba(5,10,24,0.6)' }}
-                  >
-                    {Math.round(aiScore * 100)}%
-                  </motion.p>
-                  <span className="mt-1 rounded-full bg-white/10 px-3 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-white">
-                    Hard AI evidence
-                  </span>
+                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center gap-1">
+                    <motion.p
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.6 }}
+                      className="text-4xl font-black text-white"
+                      style={{ textShadow: '0 3px 12px rgba(5,10,24,0.6)' }}
+                    >
+                      {Math.round(aiScore * 100)}%
+                    </motion.p>
+                    <span className="mt-1 rounded-full bg-white/10 px-3 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-white">
+                      Hard AI evidence
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1638,16 +1640,18 @@ function DashboardSection() {
                     transition={{ duration: 6, repeat: Infinity, repeatType: 'mirror' }}
                     aria-hidden
                   />
-                  <div className="flex items-start justify-between">
-                    <div>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-3">
                       <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-slate-200">
                         {card.badge}
                       </span>
-                      <p className="mt-3 text-2xl font-semibold text-white">
-                        {card.value}
-                        {card.suffix}
-                      </p>
-                      <p className="text-sm text-slate-400">{card.description}</p>
+                      <div>
+                        <p className="text-3xl font-semibold text-white leading-tight">
+                          {card.value}
+                          {card.suffix}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-400 leading-relaxed">{card.description}</p>
+                      </div>
                     </div>
                     <motion.div
                       className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-700/60 bg-slate-900/60 shadow-inner"
@@ -1657,24 +1661,16 @@ function DashboardSection() {
                       <Icon className={`h-5 w-5 ${card.accent}`} />
                     </motion.div>
                   </div>
-                  <div className="mt-5 flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
-                    <div className="flex items-center gap-1">
+                  <div className="mt-6 border-t border-white/5 pt-4 text-xs uppercase tracking-[0.25em] text-slate-500 flex items-center justify-between">
+                    <span className="flex items-center gap-2">
                       <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                       Stable
-                    </div>
-                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-                    <EyeOff className="h-4 w-4 text-slate-500" />
-                    Noise gated
+                    </span>
+                    <span className="flex items-center gap-2 text-[10px] tracking-[0.35em] text-white/40">
+                      <EyeOff className="h-4 w-4 text-slate-500" />
+                      Noise gated · Data flow
+                    </span>
                   </div>
-                  <motion.div
-                    className="absolute bottom-4 right-4 flex flex-col gap-1.5 text-[10px] uppercase tracking-[0.2em] text-white/30"
-                    animate={isInView ? { opacity: [0.5, 0.8, 0.5] } : { opacity: 0.4 }}
-                    transition={{ duration: 4, repeat: Infinity }}
-                    aria-hidden
-                  >
-                    <span>01 · 10</span>
-                    <span>DATA FLOW</span>
-                  </motion.div>
                 </motion.div>
               )
             })}
