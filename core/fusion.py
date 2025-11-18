@@ -49,20 +49,42 @@ class DeepfakeFusion:
         self.calibration = None
         self.thresholds = None  # Conservative threshold config
         self.metric_weights = get_metric_weights()
+        self.use_interactions = False  # Flag for interaction features
         self.load_models()
     
     def load_models(self):
         """Load pre-trained fusion model, calibration, and threshold config."""
-        # Try to load trained model
+        # Try to load improved model first (if available)
+        improved_model_path = "models/fusion_improved.pkl"
+        if os.path.exists(improved_model_path):
+            try:
+                if joblib is not None:
+                    self.model = joblib.load(improved_model_path)
+                    self.use_interactions = True  # Flag to create interaction features
+                    print(f"[fusion] Loaded improved ensemble fusion model: {improved_model_path}")
+                    # Try to load improved thresholds
+                    improved_thresholds_path = "models/fusion_thresholds_improved.json"
+                    if os.path.exists(improved_thresholds_path):
+                        with open(improved_thresholds_path, 'r') as f:
+                            self.thresholds = json.load(f)
+                            print(f"[fusion] Loaded improved thresholds: AI={self.thresholds.get('ai_threshold_conservative', 0.85):.3f}")
+                    return
+            except Exception as e:  # pragma: no cover
+                print(f"[fusion] Failed to load improved model ({e}); trying standard model...")
+                self.use_interactions = False
+        
+        # Try to load standard trained model
         if os.path.exists(FUSION_MODEL_PATH):
             try:
                 if joblib is not None:
                     self.model = joblib.load(FUSION_MODEL_PATH)
+                    self.use_interactions = False
                     # One-line log so users can confirm the model is active
                     print(f"[fusion] Loaded supervised fusion model: {FUSION_MODEL_PATH}")
             except Exception as e:  # pragma: no cover
                 print(f"[fusion] Failed to load supervised model ({e}); falling back to rule-based.")
                 self.model = None
+                self.use_interactions = False
         
         # Try to load calibration
         if os.path.exists(CALIBRATION_PATH):
@@ -173,7 +195,29 @@ class DeepfakeFusion:
         row = self._extract_features_row(analysis_results)
         # Ensure column order matches training
         data = {col: [row.get(col)] for col in self.TRAIN_FEATURE_COLUMNS}
-        return pd.DataFrame(data)
+        df = pd.DataFrame(data)
+        
+        # Create interaction features if using improved model
+        if self.use_interactions:
+            interactions = [
+                ("forensics.flicker", "temp.flow_oddity"),
+                ("art.edge", "art.texture"),
+                ("face.mouth_exag", "face.eye_blink"),
+                ("forensics.prnu", "quality.blur"),
+                ("temp.rppg", "face.mouth_exag"),
+            ]
+            
+            for feat1, feat2 in interactions:
+                if feat1 in df.columns and feat2 in df.columns:
+                    # Create interaction if both features are present
+                    val1 = df[feat1].iloc[0]
+                    val2 = df[feat2].iloc[0]
+                    if pd.notna(val1) and pd.notna(val2):
+                        df[f"{feat1}_x_{feat2}"] = [val1 * val2]
+                    else:
+                        df[f"{feat1}_x_{feat2}"] = [np.nan]
+        
+        return df
     
     def fuse_rule_based(self, analysis_results: Dict) -> float:
         """Rule-based fusion (fallback when no trained model).
@@ -371,15 +415,15 @@ class DeepfakeFusion:
             pass
 
         # ========== HARD AI EVIDENCE (boosts AI probability) ==========
-        wm = analysis_results.get('watermark', {})
-        has_wm = bool(wm.get('detected') and wm.get('confidence', 0.0) >= 0.8)
+        # NOTE: Generator watermarks are now handled BEFORE model prediction in predict()
+        # This section handles other hard evidence (scene logic, anatomy) but NOT watermarks
+        # Watermarks are handled in predict() before model runs, so we skip watermark checks here
+        wm = analysis_results.get('watermark', {}) or {}
         
-        # NEW: Check for AI generator watermark (Sora, Runway, etc.)
-        has_generator_wm = bool(
-            wm.get('generator_hint', False) and
-            wm.get('confidence', 0.0) >= 0.8 and
-            wm.get('persistent', False)
-        )
+        # Skip watermark checks here - already handled in predict()
+        # Only check for other hard evidence (scene logic breaks, anatomy)
+        has_generator_wm = False  # Watermarks already handled, don't check again
+        has_wm = False  # Don't apply regular watermark boosts here
         
         scene_logic = analysis_results.get('scene_logic', {})
         has_logic_break = bool(scene_logic.get('flag') and scene_logic.get('confidence', 0.0) >= 0.8)
@@ -479,6 +523,135 @@ class DeepfakeFusion:
         Returns:
             Calibrated probability of AI generation
         """
+        # ========== CRITICAL: Check for hard AI evidence FIRST ==========
+        # If we have a generator watermark (Sora, Runway, etc.), ALWAYS return high AI probability
+        # This MUST happen before model prediction to prevent the model from overriding it
+        # BUT: Must be strict to avoid false positives
+        wm = analysis_results.get('watermark', {}) or {}
+        
+        # Only check if watermark is actually detected AND has valid data
+        # Safeguard: Don't trigger on empty/default values
+        if not wm.get('detected', False) or not wm:
+            # No watermark detected, proceed with normal model prediction
+            pass
+        elif wm.get('watermark') is None and wm.get('text') is None and not wm.get('generator_hint', False):
+            # Watermark "detected" but no actual text or hint - likely false positive
+            # Proceed with normal model prediction
+            pass
+        else:
+            # Watermark detected - check if it's a generator watermark
+            # Use STRICT criteria to avoid false positives
+            has_generator_wm = False
+            wm_text = str(wm.get('watermark', '') or '').upper().strip()
+            raw_text = str(wm.get('text', '') or '').upper().strip()
+            
+            # STRICT generator keywords - only actual generator names/brands
+            # Removed generic terms like "STABLE", "DIFFUSION", "AI GENERATED" that cause false positives
+            strict_generator_keywords = [
+                'SORA', 'SORA AI', 'SORA.AI', 'SORA-AI',
+                'RUNWAY', 'RUNWAYML', 'RUNWAY ML', 'GEN-2', 'GEN-3',
+                'VEO', 'IMAGEN',
+                'MIDJOURNEY',
+                'PIKA', 'SYNTHESIA', 'D-ID', 'HEYGEN',
+                'DALL-E', 'DALLE'
+            ]
+            
+            # Check 1: generator_hint flag MUST be True AND confidence must be high
+            # This is the most reliable indicator
+            # CRITICAL: Also verify text is not empty and matches a generator keyword
+            if wm.get('generator_hint', False):
+                conf = wm.get('confidence', 0.0)
+                # Require high confidence (0.75+) AND persistence for generator_hint
+                if conf >= 0.75 and wm.get('persistent', False):
+                    # Also verify the text matches a generator keyword (MUST have text)
+                    check_text = wm_text or raw_text
+                    if check_text and len(check_text.strip()) > 0:
+                        for keyword in strict_generator_keywords:
+                            if keyword in check_text:
+                                has_generator_wm = True
+                                print(f"[fusion] Generator watermark confirmed: '{check_text}' (generator_hint=True, conf={conf:.2f}, persistent=True)")
+                                break
+                    else:
+                        # generator_hint is True but no text - likely false positive, skip
+                        print(f"[fusion] WARNING: generator_hint=True but no watermark text found. Skipping to avoid false positive.")
+            
+            # Check 2: If generator_hint is True but confidence is lower, require:
+            # - High confidence (≥0.8) OR
+            # - Persistent + corner + confidence ≥0.7
+            if not has_generator_wm and wm.get('generator_hint', False):
+                conf = wm.get('confidence', 0.0)
+                is_persistent = wm.get('persistent', False)
+                is_corner = wm.get('corner', False)
+                
+                if conf >= 0.8:
+                    # Very high confidence, trust it
+                    check_text = wm_text or raw_text
+                    if check_text:
+                        for keyword in strict_generator_keywords:
+                            if keyword in check_text:
+                                has_generator_wm = True
+                                print(f"[fusion] Generator watermark confirmed: '{check_text}' (high confidence={conf:.2f})")
+                                break
+                elif is_persistent and is_corner and conf >= 0.7:
+                    # Persistent corner watermark with decent confidence
+                    check_text = wm_text or raw_text
+                    if check_text:
+                        for keyword in strict_generator_keywords:
+                            if keyword in check_text:
+                                has_generator_wm = True
+                                print(f"[fusion] Generator watermark confirmed: '{check_text}' (persistent corner, conf={conf:.2f})")
+                                break
+            
+            # Check 3: Even without generator_hint, if we have very high confidence persistent watermark
+            # with matching text, trust it (but require higher confidence)
+            if not has_generator_wm:
+                conf = wm.get('confidence', 0.0)
+                is_persistent = wm.get('persistent', False)
+                is_corner = wm.get('corner', False)
+                
+                if is_persistent and is_corner and conf >= 0.85:
+                    # Very high confidence persistent corner watermark
+                    check_text = wm_text or raw_text
+                    if check_text:
+                        for keyword in strict_generator_keywords:
+                            if keyword in check_text:
+                                has_generator_wm = True
+                                print(f"[fusion] Generator watermark confirmed: '{check_text}' (very high confidence persistent corner, conf={conf:.2f})")
+                                break
+            
+            # If we have a confirmed generator watermark, IMMEDIATELY return high AI probability
+            # FINAL SAFEGUARD: Only trigger if we have confirmed text match or very high confidence
+            if has_generator_wm:
+                # Double-check: ensure we have either matching text OR very high confidence with generator_hint
+                final_check = False
+                if wm_text or raw_text:
+                    # We have text that matched a keyword - this is definitive
+                    final_check = True
+                elif wm.get('generator_hint', False) and wm.get('confidence', 0.0) >= 0.85:
+                    # Very high confidence generator_hint without text - still trust it
+                    final_check = True
+                
+                if final_check:
+                    prob = DECISION["HARD_AI_MIN_PROB"]  # 0.95 minimum
+                    analysis_results['_hard_ai_evidence'] = {
+                        'applied': True,
+                        'details': [f"Generator watermark confirmed: {wm_text or raw_text or 'via generator_hint'}"],
+                        'min_prob_enforced': DECISION["HARD_AI_MIN_PROB"],
+                        'source': 'watermark_override',
+                        'watermark_text': wm_text or raw_text,
+                        'confidence': wm.get('confidence', 0.0),
+                        'generator_hint': wm.get('generator_hint', False),
+                        'persistent': wm.get('persistent', False),
+                        'corner': wm.get('corner', False)
+                    }
+                    print(f"[fusion] HARD AI EVIDENCE: Generator watermark confirmed. Overriding model prediction with prob={prob:.3f}")
+                    # Skip all other processing - watermark is definitive
+                    return prob
+                else:
+                    # Has generator_wm flag but failed final check - likely false positive
+                    print(f"[fusion] WARNING: Potential generator watermark but failed final validation. Proceeding with normal prediction.")
+        
+        # No generator watermark detected - proceed with normal model prediction
         # Refresh adaptive weights in case new feedback has arrived
         self.metric_weights = get_metric_weights()
         if isinstance(self.model, str) or self.model is None:
@@ -490,6 +663,9 @@ class DeepfakeFusion:
                 prob = self.fuse_rule_based(analysis_results)
             else:
                 prob = float(self.model.predict_proba(df)[0, 1])
+                # Debug: Log model prediction
+                if prob > 0.9:
+                    print(f"[fusion] Model predicted high AI probability: {prob:.3f} (checking for false positive)")
         
         # Apply calibration if available
         if self.calibration:
@@ -500,11 +676,15 @@ class DeepfakeFusion:
             logit = np.log(p / (1.0 - p))
             prob = 1.0 / (1.0 + np.exp(-logit / max(temp, eps)))
         
-        # Hard-evidence overrides (logit boosts)
+        # Hard-evidence overrides (logit boosts) - but watermark already handled above
         prob = self._apply_hard_evidence_boosts(prob, analysis_results)
 
-        # Check if hard AI evidence was applied
+        # Check if hard AI evidence was applied (watermark override or other hard evidence)
         has_hard_ai = analysis_results.get('_hard_ai_evidence', {}).get('applied', False)
+        
+        # If watermark was detected and overridden, skip all other rules
+        if has_hard_ai and analysis_results.get('_hard_ai_evidence', {}).get('source') == 'watermark_override':
+            return prob  # Already set to HARD_AI_MIN_PROB (0.95)
         
         # Independence rule: require two strong independent branches to exceed 0.90
         # SKIP this rule if hard AI evidence present
