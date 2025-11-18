@@ -13,6 +13,7 @@ import argparse
 import warnings
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
@@ -123,12 +124,13 @@ def extract_feature_importances(pipeline, feature_names):
     # Get the calibrated classifier
     clf = pipeline.named_steps['clf']
     
-    # CalibratedClassifierCV wraps the base estimator
-    if hasattr(clf, 'calibrated_classifiers_'):
-        # Get first fold's base estimator (they should be similar)
-        base_est = clf.calibrated_classifiers_[0].base_estimator
-    else:
-        base_est = clf
+    base_est = clf
+    if hasattr(clf, "calibrated_classifiers_"):
+        cal = clf.calibrated_classifiers_[0]
+        if hasattr(cal, "base_estimator"):  # older sklearn
+            base_est = cal.base_estimator
+        elif hasattr(cal, "estimator"):  # sklearn >=1.4
+            base_est = cal.estimator
     
     if not hasattr(base_est, 'coef_'):
         return {}
@@ -216,10 +218,12 @@ def main():
             print(f"Dropped {n_before - n_after} rows with all-missing temporal features")
     
     X = df[feats].copy()
-    y = df["label"].astype(int).values
+    y: NDArray[np.int_] = np.asarray(df["label"], dtype=int)
     
     print(f"Final dataset: {len(X)} samples, {len(feats)} features")
-    print(f"Class distribution: Real={np.sum(y==0)}, AI={np.sum(y==1)}")
+    real_count = int((y == 0).sum())
+    ai_count = int((y == 1).sum())
+    print(f"Class distribution: Real={real_count}, AI={ai_count}")
     
     # ========== STEP 2: Train/Val/Test Split ==========
     print("\n[2/8] Splitting data...")

@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { motion, useInView, animate } from 'framer-motion'
 import {
   Shield,
@@ -33,7 +33,8 @@ import {
   Box,
   Signal,
   Headphones,
-  FileVideo
+  FileVideo,
+  Loader2
 } from 'lucide-react'
 import { Twitter, Github, Linkedin } from 'lucide-react'
 import { SimpleGlobe } from './components/SimpleGlobe'
@@ -66,8 +67,94 @@ const navItems = {
   }
 } as const
 
+const PixelGridIcon = () => (
+  <svg className="w-8 h-8 text-white" viewBox="0 0 32 32" fill="none">
+    <rect x="4" y="4" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="1.6" />
+    <path d="M10 4v18M16 4v18M4 10h18M4 16h18" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" opacity="0.6" />
+    <circle cx="21" cy="21" r="6" stroke="currentColor" strokeWidth="1.6" />
+    <path d="M25 25l4 4" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+  </svg>
+)
+
+const RealtimeIcon = () => (
+  <svg className="w-8 h-8 text-white" viewBox="0 0 32 32" fill="none">
+    <circle cx="16" cy="16" r="10" stroke="currentColor" strokeWidth="1.6" />
+    <path d="M16 8v8l5 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path
+      d="M6 16c0-5.523 4.477-10 10-10M26 16c0 5.523-4.477 10-10 10"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      opacity="0.6"
+    />
+    <path d="M22 6l4 2-2 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+const ShieldGridIcon = () => (
+  <svg className="w-8 h-8 text-white" viewBox="0 0 32 32" fill="none">
+    <path
+      d="M16 4l9 3v6c0 6.5-4 12.5-9 15-5-2.5-9-8.5-9-15V7l9-3z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+    />
+    <path d="M16 11v14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+    <path d="M11 18h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+    <path d="M12.5 13.5h7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
+  </svg>
+)
+
+function useSmoothScroll() {
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const isPointerFine = window.matchMedia('(pointer: fine)').matches
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (!isPointerFine || prefersReducedMotion) return
+    let target = window.scrollY
+    let current = window.scrollY
+    let rafId: number | null = null
+
+    const update = () => {
+      current += (target - current) * 0.12
+      window.scrollTo(0, current)
+      if (Math.abs(target - current) > 0.5) {
+        rafId = requestAnimationFrame(update)
+      } else {
+        rafId = null
+      }
+    }
+
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault()
+      target = Math.min(
+        document.body.scrollHeight - window.innerHeight,
+        Math.max(0, target + event.deltaY)
+      )
+      if (rafId === null) {
+        rafId = requestAnimationFrame(update)
+      }
+    }
+
+    window.addEventListener('wheel', onWheel, { passive: false })
+    return () => {
+      window.removeEventListener('wheel', onWheel)
+      if (rafId !== null) cancelAnimationFrame(rafId)
+    }
+  }, [])
+}
+
+type AuthUser = {
+  id: number
+  email: string
+  name: string
+  picture?: string | null
+  provider: 'google' | 'local'
+}
+
 export default function App() {
   // Simple client-side routing without extra deps
+  useSmoothScroll()
   const [route, setRoute] = useState<string>(typeof window !== 'undefined' ? window.location.pathname : '/')
   useEffect(() => {
     const onPop = () => setRoute(window.location.pathname)
@@ -99,6 +186,12 @@ export default function App() {
   const [scrolled, setScrolled] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null)
+  const [authLoading, setAuthLoading] = useState<boolean>(true)
+  const startGoogleLogin = () => {
+    if (typeof window === 'undefined') return
+    window.location.assign('/auth/google')
+  }
 
   // Helper: show logo splash, then run callback (e.g., navigate)
   const withLogoSplash = (action: () => void) => {
@@ -149,6 +242,39 @@ export default function App() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  const fetchAuthState = async () => {
+    try {
+      const res = await fetch('/auth/me')
+      if (!res.ok) return
+      const data = await res.json()
+      setAuthUser(data.authenticated ? data.user : null)
+    } catch (err) {
+      console.error('Failed to load auth state', err)
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchAuthState()
+  }, [])
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/auth/logout', { method: 'POST' })
+      setAuthUser(null)
+    } catch (err) {
+      console.error('Failed to logout', err)
+    }
+  }
+
+  const scrollToAuthPanel = () => {
+    const target = document.getElementById('auth-panel')
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
 
   // Apply theme changes and persist to localStorage
   useEffect(() => {
@@ -269,7 +395,7 @@ export default function App() {
             <div className="hidden lg:flex items-center gap-3">
               <button
                 onClick={handleDarkModeToggle}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
                 aria-label="Toggle dark mode"
                 role="switch"
                 aria-checked={isDarkMode}
@@ -277,20 +403,68 @@ export default function App() {
                 {isDarkMode ? <Sun className="w-5 h-5 text-gray-400" /> : <Moon className="w-5 h-5 text-gray-600" />}
                 <span className="text-sm text-gray-700 dark:text-gray-300">{isDarkMode ? 'Dark' : 'Light'}</span>
               </button>
-              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-4 py-2 text-gray-900 dark:text-gray-100 hover:text-orange-500 transition-colors">
-                Sign in
-              </motion.button>
+              {!authUser ? (
+                <>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={scrollToAuthPanel}
+                    className="px-5 py-2 text-gray-900 dark:text-gray-100 hover:text-orange-500 transition-colors rounded-full border border-transparent hover:border-orange-200 dark:hover:border-orange-700"
+                  >
+                    Login / Sign up
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    type="button"
+                    onClick={startGoogleLogin}
+                    className="px-5 py-2 text-gray-900 dark:text-gray-100 hover:text-orange-500 transition-colors flex items-center gap-2 rounded-full border border-gray-200 dark:border-slate-700"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M18.17 10.19c0-.63-.06-1.24-.16-1.83H10v3.46h4.58c-.2 1.05-.8 1.93-1.69 2.53v2.11h2.73c1.6-1.47 2.53-3.64 2.53-6.27z" fill="#4285F4" />
+                      <path d="M10 18.5c2.28 0 4.2-.75 5.6-2.04l-2.73-2.11c-.76.51-1.73.81-2.87.81-2.21 0-4.08-1.49-4.75-3.5H2.42v2.18A8.5 8.5 0 0010 18.5z" fill="#34A853" />
+                      <path d="M5.25 10.66c-.17-.51-.27-1.05-.27-1.61s.1-1.1.27-1.61V5.26H2.42A8.5 8.5 0 001.5 10c0 1.37.33 2.67.92 3.82l2.83-2.16z" fill="#FBBC05" />
+                      <path d="M10 4.24c1.25 0 2.37.43 3.25 1.27l2.44-2.44C14.2 1.69 12.28.9 10 .9a8.5 8.5 0 00-7.58 4.68l2.83 2.18c.67-2.01 2.54-3.5 4.75-3.5z" fill="#EA4335" />
+                    </svg>
+                    <span>Google</span>
+                  </motion.button>
+                </>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-white/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                    {authUser.picture ? (
+                      <img src={authUser.picture} alt={authUser.name} className="w-8 h-8 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-orange-500/80 flex items-center justify-center text-white text-sm font-semibold">
+                        {authUser.name
+                          .split(' ')
+                          .map((n) => n[0])
+                          .slice(0, 2)
+                          .join('')
+                          .toUpperCase()}
+                      </div>
+                    )}
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{authUser.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight">{authUser.email}</p>
+                    </div>
+                  </div>
+                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleLogout} className="px-5 py-2 text-gray-900 dark:text-gray-100 hover:text-orange-500 transition-colors rounded-full border border-transparent hover:border-orange-200 dark:hover:border-orange-700">
+                    Sign out
+                  </motion.button>
+                </div>
+              )}
               <motion.button
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => withLogoSplash(() => navigate('/detect'))}
-                className="px-5 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg shadow-lg shadow-orange-500/30 transition-shadow hover:shadow-orange-500/50"
+                className="px-6 py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-full shadow-lg shadow-orange-500/30 transition-shadow hover:shadow-orange-500/50"
               >
                 Get Started
               </motion.button>
             </div>
             <button
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+              className="lg:hidden p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -345,27 +519,27 @@ export default function App() {
                 <a
                   key={item}
                   href={`#${item.toLowerCase()}`}
-                  className="block px-4 py-2 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                  className="block px-4 py-2 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                 >
                   {item}
                 </a>
               ))}
               <a
                 href="#pricing"
-                className="block px-4 py-2 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                className="block px-4 py-2 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
               >
                 Pricing
               </a>
               <a
                 href="#contact"
-                className="block px-4 py-2 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                className="block px-4 py-2 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
               >
                 Contact
               </a>
               <div className="pt-4 border-t border-gray-200 dark:border-slate-800 space-y-2">
                 <button
                   onClick={handleDarkModeToggle}
-                  className="w-full px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-between"
+                  className="w-full px-4 py-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-between"
                   aria-label="Toggle dark mode (mobile)"
                   role="switch"
                   aria-checked={isDarkMode}
@@ -376,15 +550,48 @@ export default function App() {
                     {isDarkMode ? 'Dark' : 'Light'}
                   </span>
                 </button>
-                <button className="w-full px-4 py-2 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                  Sign in
-                </button>
+                {!authUser ? (
+                  <>
+                <button
+                  className="w-full px-4 py-2 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                      onClick={() => {
+                        scrollToAuthPanel()
+                        setIsMobileMenuOpen(false)
+                      }}
+                    >
+                      Login / Sign up
+                    </button>
+                    <button
+                  className="w-full px-4 py-2 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex items-center justify-center gap-2"
+                      type="button"
+                      onClick={startGoogleLogin}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18.17 10.19c0-.63-.06-1.24-.16-1.83H10v3.46h4.58c-.2 1.05-.8 1.93-1.69 2.53v2.11h2.73c1.6-1.47 2.53-3.64 2.53-6.27z" fill="#4285F4" />
+                        <path d="M10 18.5c2.28 0 4.2-.75 5.6-2.04l-2.73-2.11c-.76.51-1.73.81-2.87.81-2.21 0-4.08-1.49-4.75-3.5H2.42v2.18A8.5 8.5 0 0010 18.5z" fill="#34A853" />
+                        <path d="M5.25 10.66c-.17-.51-.27-1.05-.27-1.61s.1-1.1.27-1.61V5.26H2.42A8.5 8.5 0 001.5 10c0 1.37.33 2.67.92 3.82l2.83-2.16z" fill="#FBBC05" />
+                        <path d="M10 4.24c1.25 0 2.37.43 3.25 1.27l2.44-2.44C14.2 1.69 12.28.9 10 .9a8.5 8.5 0 00-7.58 4.68l2.83 2.18c.67-2.01 2.54-3.5 4.75-3.5z" fill="#EA4335" />
+                      </svg>
+                      Google
+                    </button>
+                  </>
+                ) : (
+                  <button
+                className="w-full px-4 py-2 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                    onClick={() => {
+                      handleLogout()
+                      setIsMobileMenuOpen(false)
+                    }}
+                  >
+                    Sign out
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false)
                     withLogoSplash(() => navigate('/detect'))
                   }}
-                  className="w-full px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg"
+                  className="w-full px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-full"
                 >
                   Get Started
                 </button>
@@ -409,7 +616,7 @@ export default function App() {
           />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-12 items-center">
-          <HeroLeft />
+          <HeroLeft user={authUser} onAuthChange={setAuthUser} loading={authLoading} startGoogleLogin={startGoogleLogin} />
           <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
             <AIDetectionDemo />
           </motion.div>
@@ -425,6 +632,7 @@ export default function App() {
           <GlobalSection />
           <DashboardSection />
           <SchoolsMarquee />
+          <StartFreeButton onClick={() => withLogoSplash(() => navigate('/detect'))} />
           <Footer />
         </>
       ) : (
@@ -499,7 +707,13 @@ function DetectPage() {
   )
 }
 
-function HeroLeft() {
+function HeroLeft(props: {
+  user: AuthUser | null
+  onAuthChange: (user: AuthUser | null) => void
+  loading: boolean
+  startGoogleLogin: () => void
+}) {
+  const { user, onAuthChange, loading, startGoogleLogin } = props
   return (
     <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} className="space-y-8">
       <motion.div
@@ -514,7 +728,7 @@ function HeroLeft() {
         >
           <Zap className="w-4 h-4 text-orange-600" />
         </motion.div>
-        <span className="text-gray-700 dark:text-gray-300 font-medium">Powered by Neural Forensics</span>
+        <span className="text-gray-700 dark:text-gray-300 font-medium">Now with chatbot integration</span>
       </motion.div>
       <div className="space-y-4">
         <h1
@@ -561,6 +775,7 @@ function HeroLeft() {
       </motion.p>
       <StatsRow />
       <CTAs />
+      <AuthPanel user={user} onAuthChange={onAuthChange} loading={loading} startGoogleLogin={startGoogleLogin} />
     </motion.div>
   )
 }
@@ -592,7 +807,12 @@ function StatsRow() {
 
 function CTAs() {
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.8 }} className="flex flex-wrap items-center gap-4">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.8 }}
+      className="flex flex-wrap items-center justify-center gap-4 text-center w-full"
+    >
       <motion.button
         whileHover={{ scale: 1.05, y: -3 }}
         whileTap={{ scale: 0.95 }}
@@ -602,30 +822,209 @@ function CTAs() {
           }
           window.dispatchEvent(new PopStateEvent('popstate'))
         }}
-        className="group px-8 py-4 bg-gray-900 dark:bg-slate-100 text-white dark:text-gray-900 rounded-xl shadow-xl hover:shadow-2xl transition-shadow flex items-center gap-2"
+        className="group px-10 py-4 bg-gray-900 dark:bg-slate-100 text-white dark:text-gray-900 rounded-full shadow-xl hover:shadow-2xl transition-shadow flex items-center gap-3 mx-auto"
       >
         <span>Start now</span>
         <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-      </motion.button>
-      <motion.button
-        whileHover={{ scale: 1.05, y: -3 }}
-        whileTap={{ scale: 0.95 }}
-        className="px-8 py-4 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-xl border border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600 hover:shadow-lg transition-all flex items-center gap-3"
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M18.17 10.19c0-.63-.06-1.24-.16-1.83H10v3.46h4.58c-.2 1.05-.8 1.93-1.69 2.53v2.11h2.73c1.6-1.47 2.53-3.64 2.53-6.27z" fill="#4285F4" />
-          <path d="M10 18.5c2.28 0 4.2-.75 5.6-2.04l-2.73-2.11c-.76.51-1.73.81-2.87.81-2.21 0-4.08-1.49-4.75-3.5H2.42v2.18A8.5 8.5 0 0010 18.5z" fill="#34A853" />
-          <path d="M5.25 10.66c-.17-.51-.27-1.05-.27-1.61s.1-1.1.27-1.61V5.26H2.42A8.5 8.5 0 001.5 10c0 1.37.33 2.67.92 3.82l2.83-2.16z" fill="#FBBC05" />
-          <path d="M10 4.24c1.25 0 2.37.43 3.25 1.27l2.44-2.44C14.2 1.69 12.28.9 10 .9a8.5 8.5 0 00-7.58 4.68l2.83 2.18c.67-2.01 2.54-3.5 4.75-3.5z" fill="#EA4335" />
-        </svg>
-        <span>Sign up with Google</span>
       </motion.button>
     </motion.div>
   )
 }
 
+function AuthPanel({
+  user,
+  onAuthChange,
+  loading,
+  startGoogleLogin
+}: {
+  user: AuthUser | null
+  onAuthChange: (user: AuthUser | null) => void
+  loading: boolean
+  startGoogleLogin: () => void
+}) {
+  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
+  const [formLoading, setFormLoading] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setFormLoading(true)
+    setError(null)
+    setMessage(null)
+    try {
+      const endpoint = mode === 'signup' ? '/auth/register' : '/auth/login'
+      const payload: Record<string, string> = {
+        email: form.email.trim(),
+        password: form.password
+      }
+      if (mode === 'signup') {
+        payload.name = form.name.trim() || form.email.trim().split('@')[0]
+      }
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Unable to authenticate')
+      }
+      onAuthChange(data.user)
+      setMessage(mode === 'signup' ? 'Account created' : 'Welcome back')
+      setForm({ name: '', email: '', password: '' })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication failed')
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const logout = async () => {
+    await fetch('/auth/logout', { method: 'POST' })
+    onAuthChange(null)
+  }
+
+  if (loading) {
+    return (
+      <div id="auth-panel" className="w-full max-w-md rounded-3xl border border-white/10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-2xl p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded-full" />
+          <div className="h-10 w-full bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+          <div className="h-10 w-full bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div id="auth-panel" className="w-full max-w-md rounded-3xl border border-white/15 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl p-6 space-y-5">
+      {!user ? (
+        <>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.5em] text-gray-500 dark:text-gray-400">Access</p>
+              <p className="text-xl font-semibold text-gray-900 dark:text-white">Secure your workspace</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setMode('login')}
+                className={`px-3 py-1.5 text-sm rounded-full border ${mode === 'login' ? 'border-orange-400 text-orange-500' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
+              >
+                Login
+              </button>
+              <button
+                onClick={() => setMode('signup')}
+                className={`px-3 py-1.5 text-sm rounded-full border ${mode === 'signup' ? 'border-orange-400 text-orange-500' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
+              >
+                Sign up
+              </button>
+            </div>
+          </div>
+          <button
+            onClick={startGoogleLogin}
+          className="w-full flex items-center justify-center gap-3 rounded-full border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-3 text-gray-900 dark:text-white font-semibold hover:border-orange-400 transition-colors"
+            type="button"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18.17 10.19c0-.63-.06-1.24-.16-1.83H10v3.46h4.58c-.2 1.05-.8 1.93-1.69 2.53v2.11h2.73c1.6-1.47 2.53-3.64 2.53-6.27z" fill="#4285F4" />
+              <path d="M10 18.5c2.28 0 4.2-.75 5.6-2.04l-2.73-2.11c-.76.51-1.73.81-2.87.81-2.21 0-4.08-1.49-4.75-3.5H2.42v2.18A8.5 8.5 0 0010 18.5z" fill="#34A853" />
+              <path d="M5.25 10.66c-.17-.51-.27-1.05-.27-1.61s.1-1.1.27-1.61V5.26H2.42A8.5 8.5 0 001.5 10c0 1.37.33 2.67.92 3.82l2.83-2.16z" fill="#FBBC05" />
+              <path d="M10 4.24c1.25 0 2.37.43 3.25 1.27l2.44-2.44C14.2 1.69 12.28.9 10 .9a8.5 8.5 0 00-7.58 4.68l2.83 2.18c.67-2.01 2.54-3.5 4.75-3.5z" fill="#EA4335" />
+            </svg>
+            Continue with Google
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
+            <span className="text-xs uppercase tracking-[0.5em] text-gray-400 dark:text-gray-500">or</span>
+            <div className="flex-1 h-px bg-gray-200 dark:bg-slate-700" />
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {mode === 'signup' && (
+              <div>
+                <label className="text-sm text-gray-600 dark:text-gray-300">Full name</label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                  className="mt-1 w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 dark:focus:ring-orange-500"
+                  placeholder="Ada Lovelace"
+                  required
+                />
+              </div>
+            )}
+            <div>
+              <label className="text-sm text-gray-600 dark:text-gray-300">Email</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                className="mt-1 w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 dark:focus:ring-orange-500"
+                placeholder="you@company.com"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600 dark:text-gray-300">Password</label>
+              <input
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+                className="mt-1 w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400 dark:focus:ring-orange-500"
+                placeholder="Minimum 8 characters"
+                required
+              />
+            </div>
+            {error && <p className="text-sm text-rose-500">{error}</p>}
+            {message && <p className="text-sm text-emerald-500">{message}</p>}
+            <button
+              type="submit"
+              disabled={formLoading}
+              className="w-full rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 font-semibold shadow-lg shadow-orange-500/30 disabled:opacity-60"
+            >
+              {formLoading ? 'Processing…' : mode === 'signup' ? 'Create account' : 'Log in'}
+            </button>
+          </form>
+        </>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-xs uppercase tracking-[0.5em] text-gray-500 dark:text-gray-400">You’re in</p>
+          <div className="flex items-center gap-4">
+            {user.picture ? (
+              <img src={user.picture} alt={user.name} className="w-14 h-14 rounded-2xl object-cover" />
+            ) : (
+              <div className="w-14 h-14 rounded-2xl bg-orange-500/80 flex items-center justify-center text-white text-xl font-bold">
+                {user.name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .slice(0, 2)
+                  .join('')
+                  .toUpperCase()}
+              </div>
+            )}
+            <div>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">{user.name}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+              <p className="text-xs uppercase tracking-[0.4em] text-gray-400 dark:text-gray-500 mt-1">{user.provider}</p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            You’re authenticated. Upload footage, save reports, and track investigations across your workspace.
+          </p>
+          <button onClick={logout} className="w-full rounded-full border border-gray-200 dark:border-slate-700 py-3 text-gray-900 dark:text-white hover:border-orange-400 transition-colors">
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Detection page section (standalone page)
 function DetectSection() {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: false, margin: '-50px' })
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [overallProgress, setOverallProgress] = useState(0)
   const [overallScore, setOverallScore] = useState(0)
@@ -636,18 +1035,21 @@ function DetectSection() {
     name: string
     description: string
     status: 'pending' | 'analyzing' | 'complete'
+    icon: typeof Search | typeof Network | typeof Timer | typeof ScanFace | typeof Signal | typeof Headphones
+    gradient: string
+    glowColor: string
   }
   const [results, setResults] = useState<
     Array<{ method: string; score: number; confidence: number; details: string[]; icon: 'eye' | 'zap' | 'waves' | 'box' | 'audio' | 'grid' }>
   >([])
   const [methods, setMethods] = useState<LocalAnalysisMethod[]>([
     // Order matches backend stage completion so checks cascade top→bottom
-    { id: '1', name: 'Frequency Domain Analysis', description: 'Detecting GAN fingerprints in spectral data', status: 'pending' }, // forensics
-    { id: '2', name: 'Pixel Stability Analysis', description: 'Analyzing temporal consistency in static regions', status: 'pending' }, // artifact
-    { id: '3', name: 'Biological Inconsistency Detection', description: 'Examining facial landmarks and body movements', status: 'pending' }, // face_dynamics
-    { id: '4', name: 'Optical Flow Analysis', description: 'Analyzing motion vectors and patterns', status: 'pending' }, // temporal
-    { id: '5', name: 'Spatial Logic Verification', description: 'Checking scene coherence and object persistence', status: 'pending' }, // scene_logic
-    { id: '6', name: 'Audio-Visual Sync Check', description: 'Verifying lip-sync and audio authenticity', status: 'pending' } // audio_visual
+    { id: '1', name: 'Frequency Domain Analysis', description: 'Detecting GAN fingerprints in spectral data', status: 'pending', icon: Search, gradient: 'from-orange-400 to-red-500', glowColor: '249, 115, 22' }, // forensics
+    { id: '2', name: 'Pixel Stability Analysis', description: 'Analyzing temporal consistency in static regions', status: 'pending', icon: Grid3x3, gradient: 'from-purple-500 to-pink-500', glowColor: '168, 85, 247' }, // artifact
+    { id: '3', name: 'Biological Inconsistency Detection', description: 'Examining facial landmarks and body movements', status: 'pending', icon: ScanFace, gradient: 'from-blue-500 to-cyan-500', glowColor: '59, 130, 246' }, // face_dynamics
+    { id: '4', name: 'Optical Flow Analysis', description: 'Analyzing motion vectors and patterns', status: 'pending', icon: Activity, gradient: 'from-emerald-500 to-teal-500', glowColor: '16, 185, 129' }, // temporal
+    { id: '5', name: 'Spatial Logic Verification', description: 'Checking scene coherence and object persistence', status: 'pending', icon: Workflow, gradient: 'from-violet-500 to-purple-500', glowColor: '139, 92, 246' }, // scene_logic
+    { id: '6', name: 'Audio-Visual Sync Check', description: 'Verifying lip-sync and audio authenticity', status: 'pending', icon: Headphones, gradient: 'from-pink-500 to-rose-500', glowColor: '236, 72, 153' } // audio_visual
   ])
 
   const handleFileSelect = async (file: File) => {
@@ -723,28 +1125,228 @@ function DetectSection() {
   }
 
   return (
-    <section id="detect" className="py-24 bg-white dark:bg-slate-950">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-10">
-          <h2 className="text-4xl md:text-5xl text-gray-900 dark:text-white mb-4">Upload Your Media</h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400">Drop a video or image to start deepfake detection</p>
+    <section ref={ref} id="detect" className="relative py-20 md:py-32 bg-gradient-to-b from-white via-gray-50 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden">
+      {/* Animated background gradients */}
+      <div className="absolute inset-0 pointer-events-none">
+        <motion.div
+          animate={{ x: [0, 100, 0], y: [0, 50, 0], scale: [1, 1.2, 1] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+          className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-400/20 via-pink-400/15 to-purple-400/20 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{ x: [0, -80, 0], y: [0, -60, 0], scale: [1, 1.3, 1] }}
+          transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+          className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-400/20 via-cyan-400/15 to-teal-400/20 rounded-full blur-3xl"
+        />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Hero Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12 md:mb-16"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2 bg-black/5 dark:bg-white/10 text-sm uppercase tracking-[0.4em] text-gray-700 dark:text-gray-300 mb-6"
+          >
+            <Sparkles className="w-4 h-4 text-orange-500" />
+            Deepfake Detection
+          </motion.div>
+          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-gray-900 dark:text-white mb-6 tracking-tight leading-tight">
+            Upload Your <span className="bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">Media</span>
+          </h2>
+          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            Drop a video or image to start deepfake detection. Get instant, detailed authenticity reports powered by neural forensics.
+          </p>
+        </motion.div>
+
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-2 gap-6 md:gap-8 lg:gap-10 mb-12">
+          {/* Upload Zone Card */}
+          <motion.div
+            initial={{ opacity: 0, x: -60 }}
+            animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -60 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="relative group"
+          >
+            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 rounded-3xl blur-lg opacity-20 group-hover:opacity-30 transition-opacity" />
+            <div className="relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl border border-white/40 dark:border-white/10 shadow-2xl p-6 md:p-8">
+              <UploadZone onFileSelect={handleFileSelect} isAnalyzing={overallProgress > 0 && overallProgress < 100} />
+            </div>
+          </motion.div>
+
+          {/* Progress & Methods Card */}
+          <motion.div
+            initial={{ opacity: 0, x: 60 }}
+            animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 60 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="relative group"
+          >
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-3xl blur-lg opacity-20 group-hover:opacity-30 transition-opacity" />
+            <div className="relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl border border-white/40 dark:border-white/10 shadow-2xl p-6 md:p-8">
+              {/* Overall Progress */}
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Overall Progress</h3>
+                  <motion.span
+                    key={overallProgress}
+                    initial={{ scale: 1.2 }}
+                    animate={{ scale: 1 }}
+                    className="text-2xl font-black bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent"
+                  >
+                    {Math.round(overallProgress)}%
+                  </motion.span>
+                </div>
+                <div className="relative h-4 bg-gray-200 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                  <motion.div
+                    className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 shadow-lg"
+                    animate={{ width: `${overallProgress}%` }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                  >
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                      animate={{ x: ['-100%', '100%'] }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                    />
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Detection Methods */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Detection Methods</h4>
+                <div className="space-y-3">
+                  {methods.map((method, index) => {
+                    const Icon = method.icon
+                    const isActive = method.status === 'analyzing'
+                    const isComplete = method.status === 'complete'
+                    return (
+                      <motion.div
+                        key={method.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                        transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        className={`relative overflow-hidden rounded-2xl border-2 p-4 transition-all ${
+                          isComplete
+                            ? `bg-gradient-to-br ${method.gradient} bg-opacity-10 ${method.gradient.includes('orange') ? 'border-orange-300 dark:border-orange-700' : method.gradient.includes('purple') ? 'border-purple-300 dark:border-purple-700' : method.gradient.includes('blue') ? 'border-blue-300 dark:border-blue-700' : method.gradient.includes('emerald') ? 'border-emerald-300 dark:border-emerald-700' : method.gradient.includes('violet') ? 'border-violet-300 dark:border-violet-700' : 'border-pink-300 dark:border-pink-700'}`
+                            : isActive
+                            ? `bg-gradient-to-br ${method.gradient} bg-opacity-5 ${method.gradient.includes('orange') ? 'border-orange-400 dark:border-orange-600' : method.gradient.includes('purple') ? 'border-purple-400 dark:border-purple-600' : method.gradient.includes('blue') ? 'border-blue-400 dark:border-blue-600' : method.gradient.includes('emerald') ? 'border-emerald-400 dark:border-emerald-600' : method.gradient.includes('violet') ? 'border-violet-400 dark:border-violet-600' : 'border-pink-400 dark:border-pink-600'}`
+                            : 'bg-gray-50 dark:bg-slate-800/50 border-gray-200 dark:border-slate-700'
+                        }`}
+                      >
+                        {/* Animated glow for active methods */}
+                        {isActive && (
+                          <motion.div
+                            className={`absolute inset-0 bg-gradient-to-r ${method.gradient} opacity-20`}
+                            animate={{ opacity: [0.2, 0.4, 0.2] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          />
+                        )}
+                        <div className="relative flex items-center gap-4">
+                          <motion.div
+                            className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${method.gradient} shadow-lg`}
+                            animate={isActive ? { scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] } : {}}
+                            transition={{ duration: 2, repeat: isActive ? Infinity : 0 }}
+                          >
+                            {isComplete ? (
+                              <CheckCircle2 className="w-6 h-6 text-white" />
+                            ) : isActive ? (
+                              <Loader2 className="w-6 h-6 text-white animate-spin" />
+                            ) : (
+                              <Icon className="w-6 h-6 text-white" />
+                            )}
+                          </motion.div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <p className={`text-sm font-bold ${isActive || isComplete ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
+                                {method.name}
+                              </p>
+                              {isActive && (
+                                <motion.span
+                                  className="text-xs font-semibold text-gray-500 dark:text-gray-400"
+                                  animate={{ opacity: [0.5, 1, 0.5] }}
+                                  transition={{ duration: 1.5, repeat: Infinity }}
+                                >
+                                  Analyzing...
+                                </motion.span>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{method.description}</p>
+                          </div>
+                        </div>
+                        {/* Progress bar for active methods */}
+                        {isActive && (
+                          <motion.div
+                            className="mt-3 h-1.5 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                          >
+                            <motion.div
+                              className={`h-full rounded-full bg-gradient-to-r ${method.gradient}`}
+                              initial={{ width: '0%' }}
+                              animate={{ width: '100%' }}
+                              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                            />
+                          </motion.div>
+                        )}
+                      </motion.div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
-        <div className="grid lg:grid-cols-2 gap-10">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow p-8">
-            <UploadZone onFileSelect={handleFileSelect} isAnalyzing={overallProgress > 0 && overallProgress < 100} />
-          </div>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow p-8">
-            <AnalysisProgress
-              methods={methods}
-              overallProgress={overallProgress}
-            />
-          </div>
-        </div>
+
+        {/* Results Display */}
         {selectedFile && results.length > 0 && (
-          <div className="mt-10">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="mt-12"
+          >
             <ResultsDisplay overallScore={overallScore} results={results} fileName={selectedFile.name} processingTime={processingTime} feedbackId={feedbackId || undefined} />
-          </div>
+          </motion.div>
         )}
+
+        {/* Info Cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="grid sm:grid-cols-3 gap-4 md:gap-6 mt-12"
+        >
+          {[
+            { icon: FileVideo, title: 'Supported Formats', desc: 'MP4, MOV, AVI, WebM, JPG, PNG', gradient: 'from-blue-500 to-cyan-500' },
+            { icon: Timer, title: 'Processing Time', desc: '~ 8-12s typical', gradient: 'from-purple-500 to-pink-500' },
+            { icon: Lock, title: 'Privacy First', desc: 'Files never shared', gradient: 'from-emerald-500 to-teal-500' }
+          ].map((item, index) => {
+            const Icon = item.icon
+            return (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ duration: 0.5, delay: 0.7 + index * 0.1 }}
+                whileHover={{ scale: 1.05, y: -4 }}
+                className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${item.gradient} bg-opacity-10 border-2 ${item.gradient.includes('blue') ? 'border-blue-300 dark:border-blue-700' : item.gradient.includes('purple') ? 'border-purple-300 dark:border-purple-700' : 'border-emerald-300 dark:border-emerald-700'} p-6 backdrop-blur-sm`}
+              >
+                <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${item.gradient} mb-4 shadow-lg`}>
+                  <Icon className="w-6 h-6 text-white" />
+                </div>
+                <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{item.title}</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{item.desc}</p>
+              </motion.div>
+            )
+          })}
+        </motion.div>
       </div>
     </section>
   )
@@ -934,6 +1536,70 @@ function AIDetectionDemo() {
           </div>
         </div>
       </motion.div>
+    </div>
+  )
+}
+
+function StartFreeButton({ onClick }: { onClick: () => void }) {
+  const letters = useMemo(() => 'StartFree'.split(''), [])
+  const scatter = useMemo(
+    () =>
+      letters.map(() => ({
+        x: (Math.random() - 0.5) * 180,
+        y: (Math.random() - 0.5) * 120,
+        rotate: (Math.random() - 0.5) * 50
+      })),
+    [letters]
+  )
+  const finalPositions = useMemo(() => {
+    const baseSpacing = 36
+    return letters.map((_, index) => {
+      const offset = index >= 5 ? 40 : 0
+      const centerOffset = ((letters.length - 1) * baseSpacing + 40) / 2
+      return {
+        x: index * baseSpacing + offset - centerOffset,
+        y: 0
+      }
+    })
+  }, [letters])
+  const [hovered, setHovered] = useState(false)
+  return (
+    <div className="px-6 py-24">
+      <div className="max-w-6xl mx-auto">
+        <motion.button
+          type="button"
+          onClick={onClick}
+          onHoverStart={() => setHovered(true)}
+          onHoverEnd={() => setHovered(false)}
+          className="relative w-full min-h-[260px] rounded-[56px] border border-white/30 dark:border-white/10 bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 text-white py-16 md:py-24 overflow-hidden shadow-[0_40px_120px_rgba(212,119,14,0.35)]"
+        >
+          <motion.div
+            aria-hidden
+            animate={{ opacity: hovered ? 0.9 : 0.4 }}
+            className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.4),_transparent_65%)]"
+          />
+          <div className="relative h-36 md:h-44 flex items-center justify-center">
+            {letters.map((char, index) => (
+              <motion.span
+                key={`${char}-${index}`}
+                className="absolute text-5xl md:text-7xl font-black tracking-[0.2em] drop-shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
+                animate={{
+                  x: hovered ? finalPositions[index].x : scatter[index].x,
+                  y: hovered ? finalPositions[index].y : scatter[index].y,
+                  rotate: hovered ? 0 : scatter[index].rotate,
+                  scale: hovered ? 1 : 0.95
+                }}
+                transition={{ type: 'spring', stiffness: 160, damping: 15 }}
+              >
+                {char}
+              </motion.span>
+            ))}
+          </div>
+          <div className="relative mt-8 text-center text-sm uppercase tracking-[0.6em] text-white/70">
+            Start free
+          </div>
+        </motion.button>
+      </div>
     </div>
   )
 }
@@ -1141,75 +1807,101 @@ function DeveloperSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: false, margin: '-100px' })
   return (
-    <section ref={ref} className="py-24 bg-gray-50 dark:bg-slate-900">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <motion.div initial={{ opacity: 0, x: -60 }} animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -60 }} transition={{ duration: 0.6 }}>
-            <h2
-              className="text-5xl lg:text-7xl text-gray-900 dark:text-white mb-6 tracking-tight"
-              style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 900 }}
-            >
-              Built for <span className="bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">Developers</span>
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
-              Simple, powerful API that integrates seamlessly into your workflow. Start detecting deepfakes in minutes.
-            </p>
-            <div className="space-y-4 mb-8">
-              {[
-                { icon: Code2, text: 'RESTful API with comprehensive docs' },
-                { icon: Zap, text: '99.9% uptime SLA guarantee' },
-                { icon: Shield, text: 'Enterprise-grade security' }
-              ].map((item, index) => {
-                const Icon = item.icon
-                return (
-                  <motion.div key={index} initial={{ opacity: 0, x: -40 }} animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }} transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }} className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-                    <p className="text-gray-700 dark:text-gray-300 text-lg">{item.text}</p>
-                  </motion.div>
-                )
-              })}
-            </div>
-            <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              whileHover={{ scale: 1.05, y: -3 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl flex items-center gap-2 shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transition-shadow"
-            >
-              <Book className="w-5 h-5" />
-              <span>View Documentation</span>
-            </motion.button>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: 60 }}
-            animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 60 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-slate-900 rounded-3xl p-8 shadow-xl border border-slate-700"
+    <section ref={ref} className="relative py-28 bg-gradient-to-b from-white via-gray-50 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden">
+      <div className="absolute inset-x-0 top-12 h-72 bg-gradient-to-r from-orange-200/30 via-pink-200/30 to-purple-200/30 dark:from-orange-500/10 dark:via-pink-500/10 dark:to-purple-500/10 blur-3xl" aria-hidden />
+      <div className="max-w-7xl mx-auto px-6 relative z-10 grid lg:grid-cols-[1.1fr,_0.9fr] gap-16 items-center">
+        <motion.div initial={{ opacity: 0, x: -60 }} animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -60 }} transition={{ duration: 0.6 }}>
+          <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 bg-black/5 dark:bg-white/10 text-sm uppercase tracking-[0.4em] text-gray-700 dark:text-gray-300 mb-6">
+            API-FIRST
+          </div>
+          <h2 className="text-5xl sm:text-6xl lg:text-7xl font-black text-gray-900 dark:text-white leading-tight mb-6">
+            Built for <span className="bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">developers</span> who ship real defences.
+          </h2>
+          <p className="text-xl text-gray-600 dark:text-gray-400 mb-10 leading-relaxed">
+            Trigger scans from CI/CD, hydrate evidence trails, and feed SOC dashboards with exact tensor receipts. One API key. No guesswork.
+          </p>
+          <div className="space-y-4 mb-10">
+            {[
+              { title: 'SDKs + REST', detail: 'Node · Python · Go-ready', Icon: PixelGridIcon },
+              { title: 'Realtime ingest', detail: 'Webhooks and stream hooks', Icon: RealtimeIcon },
+              { title: 'Zero trust', detail: 'SOC automation baked in', Icon: ShieldGridIcon }
+            ].map((item, index) => {
+              const { Icon } = item
+              return (
+                <motion.div
+                  key={item.title}
+                  initial={{ opacity: 0, x: -40 }}
+                  animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }}
+                  transition={{ duration: 0.45, delay: 0.15 + index * 0.1 }}
+                  className="flex items-center gap-4 rounded-2xl border border-white/60 dark:border-white/10 bg-white/90 dark:bg-white/5 px-5 py-4 shadow-xl shadow-black/5 backdrop-blur"
+                >
+                  <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 via-pink-500 to-purple-500 flex items-center justify-center shadow-2xl">
+                    <div className="absolute inset-0 rounded-2xl bg-white/15 blur-lg" aria-hidden />
+                    <Icon />
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{item.title}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{item.detail}</p>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            whileHover={{ scale: 1.05, y: -4 }}
+            whileTap={{ scale: 0.97 }}
+            className="inline-flex items-center gap-3 px-8 py-3 bg-gradient-to-r from-black via-slate-900 to-black text-white rounded-full shadow-[0_20px_60px_rgba(15,23,42,0.35)]"
           >
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-3 h-3 rounded-full bg-red-500" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500" />
-              <div className="w-3 h-3 rounded-full bg-green-500" />
-            </div>
-            <pre className="text-sm text-gray-300 overflow-x-auto">
-              <code>{`import { SeroAI } from 'sero-sdk';
-const sero = new SeroAI({
-  apiKey: process.env.SERO_API_KEY
+            <Book className="w-5 h-5" />
+            <span>View API docs</span>
+          </motion.button>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: 80 }}
+          animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 80 }}
+          transition={{ duration: 0.6, delay: 0.25 }}
+          className="relative rounded-[32px] bg-slate-950 border border-white/10 shadow-[0_35px_80px_rgba(15,23,42,0.65)] p-8 overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_55%)]" aria-hidden />
+          <div className="relative flex items-center gap-2 mb-6">
+            <span className="w-3 h-3 rounded-full bg-rose-400" />
+            <span className="w-3 h-3 rounded-full bg-amber-400" />
+            <span className="w-3 h-3 rounded-full bg-emerald-400" />
+            <span className="ml-auto text-xs uppercase tracking-[0.4em] text-white/40">LIVE</span>
+          </div>
+          <div className="relative">
+            <pre className="text-sm text-slate-200 font-mono leading-relaxed">
+{`import { SeroAI } from 'sero-sdk';
+
+const client = new SeroAI({
+  apiKey: process.env.SERO_API_KEY,
+  region: 'auto'
 });
-const result = await sero.detect({
-  file: 'video.mp4',
-  type: 'video'
+
+const report = await client.detect({
+  file: 'press.wav',
+  type: 'video',
+  explain: true
 });
-console.log(result.isDeepfake);
+
+console.log(report.isDeepfake);
 // false
-console.log(result.confidence);
-// 0.98`}</code>
+console.log(report.confidence);
+// 0.98
+console.log(report.chainOfEvidence);
+// ['watermark','sceneLogic','tensorForensics']`}
             </pre>
-          </motion.div>
-        </div>
+            <motion.div
+              aria-hidden
+              animate={{ opacity: [0.3, 0.9, 0.3] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent"
+            />
+          </div>
+        </motion.div>
       </div>
     </section>
   )
@@ -1701,13 +2393,13 @@ function Footer() {
               AI-powered deepfake detection that restores trust in digital media.
             </p>
             <div className="flex items-center gap-3">
-              <a href="#twitter" className="w-10 h-10 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors" aria-label="Twitter">
+              <a href="#twitter" className="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors" aria-label="Twitter">
                 <Twitter className="w-5 h-5 text-gray-300" />
               </a>
-              <a href="https://github.com/mizuharaa/SeroAI" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors" aria-label="GitHub">
+              <a href="https://github.com/mizuharaa/SeroAI" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors" aria-label="GitHub">
                 <Github className="w-5 h-5 text-gray-300" />
               </a>
-              <a href="https://www.linkedin.com/in/trkang/" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors" aria-label="LinkedIn">
+              <a href="https://www.linkedin.com/in/trkang/" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors" aria-label="LinkedIn">
                 <Linkedin className="w-5 h-5 text-gray-300" />
               </a>
             </div>
