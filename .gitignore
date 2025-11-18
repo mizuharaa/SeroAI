@@ -33,6 +33,7 @@ uploads/
 data/cache/
 data/*.db
 data/training/*.csv
+data/avspeech/*.csv
 models/*.pkl
 models/*.json
 
