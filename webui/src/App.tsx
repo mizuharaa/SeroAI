@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { motion, useInView, animate } from 'framer-motion'
+import { motion, useInView, animate, useScroll, useTransform } from 'framer-motion'
 import {
   Shield,
   ShieldAlert,
@@ -1910,68 +1910,155 @@ console.log(report.chainOfEvidence);
 function WhySeroSection() {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: false, margin: '-100px' })
+  
+  // Scroll progress for connecting animation
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"]
+  })
+  
+  // Transform scroll progress to control connection animation
+  const connectionProgress = useTransform(scrollYProgress, [0, 0.5, 1], [0, 1, 1])
+  const scatterProgress = useTransform(scrollYProgress, [0, 0.3], [1, 0])
+  
   const stats = [
     { value: '90%+', label: 'Precision (high-signal)', desc: 'On strong evidence cases', color: 'orange' },
     { value: '8–12s', label: 'Detection Speed', desc: 'Typical end-to-end time', color: 'purple' },
     { value: '3K+', label: 'Videos Trained', desc: 'Supervised fusion model', color: 'blue' },
     { value: 'Weekdays', label: 'Support', desc: 'Email-based assistance', color: 'green' }
   ] as const
+  
+  // Split heading into words for scattering
+  const headingWords = ["Why", "Choose", "Sero"]
+  const subtitleWords = "Industry-leading performance backed by cutting-edge AI research".split(" ")
+  
   return (
-    <section ref={ref} className="py-24 bg-white dark:bg-slate-950">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
+    <section ref={ref} className="py-20 sm:py-24 lg:py-32 relative overflow-hidden bg-gradient-to-br from-gray-50 via-orange-50/30 to-rose-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      {/* Background decoration */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-200/20 dark:bg-orange-900/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-rose-200/20 dark:bg-rose-900/10 rounded-full blur-3xl" />
+      </div>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="text-center mb-12 sm:mb-16 lg:mb-20">
+          {/* Scattered heading that connects on scroll */}
           <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            transition={{ duration: 0.6 }}
-            className="text-5xl lg:text-7xl text-gray-900 dark:text-white mb-6 tracking-tight"
-            style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 900 }}
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-gray-900 dark:text-white mb-4 sm:mb-6 tracking-tight font-black flex flex-wrap justify-center items-center gap-2 sm:gap-3 md:gap-4"
+            style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
           >
-            Why Choose <span className="bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">Sero</span>
+            {headingWords.map((word, index) => {
+              const isSero = word === "Sero"
+              // Calculate scattered positions (random but consistent)
+              const scatterX = (index % 2 === 0 ? 1 : -1) * (50 + index * 30)
+              const scatterY = (index % 3 === 0 ? 1 : -1) * (40 + index * 25)
+              const scatterRotate = (index % 2 === 0 ? 1 : -1) * (15 + index * 10)
+              
+              return (
+                <motion.span
+                  key={word}
+                  style={{
+                    x: useTransform(scatterProgress, [0, 1], [0, scatterX]),
+                    y: useTransform(scatterProgress, [0, 1], [0, scatterY]),
+                    rotate: useTransform(scatterProgress, [0, 1], [0, scatterRotate]),
+                    opacity: useTransform(connectionProgress, [0, 0.5, 1], [0.3, 0.8, 1]),
+                    scale: useTransform(connectionProgress, [0, 0.5, 1], [0.8, 1.1, 1]),
+                  }}
+                  className={isSero ? "bg-gradient-to-r from-orange-600 via-rose-600 to-pink-600 bg-clip-text text-transparent" : ""}
+                >
+                  {word}
+                </motion.span>
+              )
+            })}
           </motion.h2>
+          
+          {/* Scattered subtitle */}
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto"
+            className="text-lg sm:text-xl md:text-2xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto font-semibold flex flex-wrap justify-center items-center gap-1 sm:gap-2"
           >
-            Industry-leading performance backed by cutting-edge AI research
+            {subtitleWords.map((word, index) => {
+              const scatterX = (index % 3 === 0 ? 1 : -1) * (20 + (index % 5) * 15)
+              const scatterY = (index % 2 === 0 ? 1 : -1) * (15 + (index % 4) * 10)
+              
+              return (
+                <motion.span
+                  key={`${word}-${index}`}
+                  style={{
+                    x: useTransform(scatterProgress, [0, 1], [0, scatterX]),
+                    y: useTransform(scatterProgress, [0, 1], [0, scatterY]),
+                    opacity: useTransform(connectionProgress, [0, 0.6, 1], [0.2, 0.7, 1]),
+                    scale: useTransform(connectionProgress, [0, 0.6, 1], [0.7, 1.05, 1]),
+                  }}
+                  className="inline-block"
+                >
+                  {word}
+                </motion.span>
+              )
+            })}
           </motion.p>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 40 }}
-                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-              transition={{ duration: 0.6, delay: 0.2 + index * 0.1 }}
-              className={`${
-                stat.color === 'orange'
-                  ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900/50'
-                  : stat.color === 'purple'
-                  ? 'bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-900/50'
-                  : stat.color === 'blue'
-                  ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50'
-                  : 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/50'
-              } p-8 rounded-3xl border text-center`}
-            >
-              <div
-                className={`text-5xl mb-4 ${
+        
+        {/* Stats cards that scatter and connect */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-10">
+          {stats.map((stat, index) => {
+            // Calculate scattered positions for cards
+            const cardScatterX = (index % 2 === 0 ? 1 : -1) * (100 + index * 50)
+            const cardScatterY = (index % 3 === 0 ? 1 : -1) * (80 + index * 40)
+            const cardRotate = (index % 2 === 0 ? 1 : -1) * (20 + index * 15)
+            
+            return (
+              <motion.div
+                key={stat.label}
+                style={{
+                  x: useTransform(scatterProgress, [0, 1], [0, cardScatterX]),
+                  y: useTransform(scatterProgress, [0, 1], [0, cardScatterY]),
+                  rotate: useTransform(scatterProgress, [0, 1], [0, cardRotate]),
+                  opacity: useTransform(connectionProgress, [0, 0.4, 1], [0, 0.6, 1]),
+                  scale: useTransform(connectionProgress, [0, 0.5, 1], [0.5, 1.1, 1]),
+                }}
+                whileHover={{ y: -8, scale: 1.02, rotate: 0 }}
+                className={`relative group ${
                   stat.color === 'orange'
-                    ? 'text-orange-600 dark:text-orange-400'
+                    ? 'bg-gradient-to-br from-orange-100 to-orange-50 dark:from-orange-950/40 dark:to-orange-900/20 border-2 border-orange-300 dark:border-orange-800/50 shadow-lg shadow-orange-200/50 dark:shadow-orange-900/20'
                     : stat.color === 'purple'
-                    ? 'text-purple-600 dark:text-purple-400'
+                    ? 'bg-gradient-to-br from-purple-100 to-purple-50 dark:from-purple-950/40 dark:to-purple-900/20 border-2 border-purple-300 dark:border-purple-800/50 shadow-lg shadow-purple-200/50 dark:shadow-purple-900/20'
                     : stat.color === 'blue'
-                    ? 'text-blue-600 dark:text-blue-400'
-                    : 'text-green-600 dark:text-green-400'
-                }`}
-                style={{ fontWeight: 900 }}
-                dangerouslySetInnerHTML={{ __html: stat.value }}
-              />
-              <h3 className="text-gray-900 dark:text-white mb-2">{stat.label}</h3>
-              <p className="text-gray-600 dark:text-gray-400">{stat.desc}</p>
-            </motion.div>
-          ))}
+                    ? 'bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-950/40 dark:to-blue-900/20 border-2 border-blue-300 dark:border-blue-800/50 shadow-lg shadow-blue-200/50 dark:shadow-blue-900/20'
+                    : 'bg-gradient-to-br from-green-100 to-green-50 dark:from-green-950/40 dark:to-green-900/20 border-2 border-green-300 dark:border-green-800/50 shadow-lg shadow-green-200/50 dark:shadow-green-900/20'
+                } p-6 sm:p-8 lg:p-10 rounded-3xl text-center transition-all duration-300 hover:shadow-2xl`}
+              >
+                {/* Glow effect on hover */}
+                <div className={`absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                  stat.color === 'orange'
+                    ? 'bg-gradient-to-br from-orange-400/20 to-transparent'
+                    : stat.color === 'purple'
+                    ? 'bg-gradient-to-br from-purple-400/20 to-transparent'
+                    : stat.color === 'blue'
+                    ? 'bg-gradient-to-br from-blue-400/20 to-transparent'
+                    : 'bg-gradient-to-br from-green-400/20 to-transparent'
+                }`} />
+                
+                <div
+                  className={`relative text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-4 sm:mb-6 font-black ${
+                    stat.color === 'orange'
+                      ? 'bg-gradient-to-r from-orange-600 to-orange-500 dark:from-orange-400 dark:to-orange-300 bg-clip-text text-transparent'
+                      : stat.color === 'purple'
+                      ? 'bg-gradient-to-r from-purple-600 to-purple-500 dark:from-purple-400 dark:to-purple-300 bg-clip-text text-transparent'
+                      : stat.color === 'blue'
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-500 dark:from-blue-400 dark:to-blue-300 bg-clip-text text-transparent'
+                      : 'bg-gradient-to-r from-green-600 to-green-500 dark:from-green-400 dark:to-green-300 bg-clip-text text-transparent'
+                  }`}
+                  dangerouslySetInnerHTML={{ __html: stat.value }}
+                />
+                <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-900 dark:text-white mb-2 sm:mb-3 font-black tracking-tight">
+                  {stat.label}
+                </h3>
+                <p className="text-sm sm:text-base md:text-lg text-gray-700 dark:text-gray-300 font-medium">
+                  {stat.desc}
+                </p>
+              </motion.div>
+            )
+          })}
         </div>
       </div>
     </section>

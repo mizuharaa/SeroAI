@@ -59,6 +59,18 @@ def detect_with_ensemble(
     # Predict
     result = classifier.predict(features)
     
+    # Debug logging
+    score = result.get('score', 0.5)
+    label = result.get('label', 'UNCERTAIN')
+    print(f"[ensemble_detector] Prediction: score={score:.3f}, label={label}")
+    
+    # Safety check: if score is suspiciously high, log feature values
+    if score > 0.8:
+        print(f"[ensemble_detector] WARNING: High score detected. Top features:")
+        sorted_features = sorted(features.items(), key=lambda x: abs(x[1]), reverse=True)[:10]
+        for key, value in sorted_features:
+            print(f"  {key}: {value:.3f}")
+    
     # Add features to result
     result['features'] = features
     

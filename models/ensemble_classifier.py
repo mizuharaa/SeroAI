@@ -47,10 +47,10 @@ class EnsembleClassifier:
         self.scaler = StandardScaler() if HAS_SKLEARN else None
         self.calibration = None
         self.thresholds = {
-            'real_threshold': 0.35,
-            'uncertain_low': 0.35,
-            'uncertain_high': 0.65,
-            'deepfake_threshold': 0.65
+            'real_threshold': 0.25,
+            'uncertain_low': 0.25,
+            'uncertain_high': 0.75,
+            'deepfake_threshold': 0.75
         }
         
         # Load config if provided
@@ -137,6 +137,9 @@ class EnsembleClassifier:
         )
         
         # Scale features
+        if self.scaler is None:
+            raise RuntimeError("Scaler not initialized. scikit-learn required for training.")
+        assert self.scaler is not None  # Type narrowing for linter
         X_train_scaled = self.scaler.fit_transform(X_train)
         X_test_scaled = self.scaler.transform(X_test)
         
@@ -159,8 +162,10 @@ class EnsembleClassifier:
             self.calibration.fit(X_train_scaled, y_train)
         
         # Evaluate
+        if self.model is None:
+            raise RuntimeError("Model not trained.")
         y_pred = self.model.predict(X_test_scaled)
-        y_proba = self.model.predict_proba(X_test_scaled)[:, 1]
+        y_proba = self.model.predict_proba(X_test_scaled)[:, 1]  # type: ignore[index]
         
         print("\n=== Training Results ===")
         print(f"Accuracy: {np.mean(y_pred == y_test):.3f}")
@@ -173,7 +178,7 @@ class EnsembleClassifier:
         print("\nClassification Report:")
         print(classification_report(y_test, y_pred))
     
-    def predict(self, features: Dict[str, float]) -> Dict[str, any]:
+    def predict(self, features: Dict[str, float]) -> Dict[str, any]:  # type: ignore[type-arg]
         """
         Predict deepfake probability from features.
         
@@ -190,15 +195,16 @@ class EnsembleClassifier:
         feature_vector = self._features_to_vector(features)
         
         # Predict
-        if self.model is not None and HAS_SKLEARN:
+        if self.model is not None and HAS_SKLEARN and self.scaler is not None:
             # Scale features
+            assert self.scaler is not None  # Type narrowing for linter
             feature_vector_scaled = self.scaler.transform([feature_vector])
             
             # Predict probability
             if self.calibration is not None:
-                prob = self.calibration.predict_proba(feature_vector_scaled)[0, 1]
+                prob = self.calibration.predict_proba(feature_vector_scaled)[0, 1]  # type: ignore[index]
             else:
-                prob = self.model.predict_proba(feature_vector_scaled)[0, 1]
+                prob = self.model.predict_proba(feature_vector_scaled)[0, 1]  # type: ignore[index]
         else:
             # Fallback: simple rule-based prediction
             prob = self._rule_based_predict(features)
@@ -228,99 +234,164 @@ class EnsembleClassifier:
     
     def _rule_based_predict(self, features: Dict[str, float]) -> float:
         """
-        Rule-based prediction that considers multiple independent signals.
-        Designed to be less biased by training data and more generalizable.
+        Conservative rule-based prediction that requires STRONG evidence.
+        Designed to avoid false positives - defaults to REAL (low score) unless
+        multiple strong signals indicate deepfake.
         """
-        # Collect evidence from different feature categories
-        motion_evidence = []
-        anatomy_evidence = []
-        frequency_evidence = []
-        audio_evidence = []
+        # Start with a REAL bias (low score) - require strong evidence to increase
+        base_score = 0.2  # Start assuming real content
         
-        # Motion features (normalize to 0-1 scale where higher = more suspicious)
+        # Collect STRONG evidence from different feature categories
+        # Use higher thresholds to avoid false positives
+        strong_evidence_count = 0
+        moderate_evidence_count = 0
+        
+        # ========== REAL-WORLD EVIDENCE (REDUCES score) ==========
+        # Smooth motion indicates real content
         constant_motion = features.get('constant_motion_ratio', 0.5)
-        if constant_motion > 0.6:
-            motion_evidence.append(min((constant_motion - 0.6) / 0.4, 1.0))
+        if constant_motion < 0.4:  # Low constant motion = natural movement
+            base_score -= 0.1
         
+        # Low temporal identity variance = consistent face (real)
         temporal_identity = features.get('temporal_identity_std', 0.5)
-        if temporal_identity > 0.5:
-            motion_evidence.append(min((temporal_identity - 0.5) / 0.5, 1.0))
+        if temporal_identity < 0.3:
+            base_score -= 0.1
         
+        # Low head jitter = smooth head movement (real)
         head_jitter = features.get('head_pose_jitter', 0.5)
-        if head_jitter > 0.6:
-            motion_evidence.append(min((head_jitter - 0.6) / 0.4, 1.0))
+        if head_jitter < 0.4:
+            base_score -= 0.1
         
-        # Anatomy features
-        hand_missing = features.get('hand_missing_finger_ratio', 0.0)
-        if hand_missing > 0.2:
-            anatomy_evidence.append(min(hand_missing / 0.8, 1.0))
-        
-        hand_abnormal = features.get('hand_abnormal_angle_ratio', 0.0)
-        if hand_abnormal > 0.2:
-            anatomy_evidence.append(min(hand_abnormal / 0.8, 1.0))
-        
-        mouth_extreme = features.get('extreme_mouth_open_frequency', 0.0)
-        if mouth_extreme > 0.2:
-            anatomy_evidence.append(min(mouth_extreme / 0.8, 1.0))
-        
-        blink_irregular = features.get('eye_blink_irregularity', 0.5)
-        if blink_irregular > 0.6:
-            anatomy_evidence.append(min((blink_irregular - 0.6) / 0.4, 1.0))
-        
+        # Good lip smoothness = natural speech (real)
         lip_smooth = features.get('lip_sync_smoothness', 0.5)
-        if lip_smooth < 0.4:
-            anatomy_evidence.append(min((0.4 - lip_smooth) / 0.4, 1.0))
+        if lip_smooth > 0.6:
+            base_score -= 0.1
         
-        # Frequency features
-        boundary_artifacts = features.get('boundary_artifact_score', 0.0)
-        if boundary_artifacts > 0.5:
-            frequency_evidence.append(min(boundary_artifacts / 1.0, 1.0))
-        
-        freq_ratio = features.get('freq_energy_ratio', 0.5)
-        if freq_ratio > 0.6:
-            frequency_evidence.append(min((freq_ratio - 0.6) / 0.4, 1.0))
-        
-        # Audio sync (only if audio present)
+        # Good audio sync = real content
         has_audio = features.get('has_audio', 0.0) > 0.5
         if has_audio:
             lip_audio_corr = features.get('lip_audio_correlation', 0.5)
-            if lip_audio_corr < 0.4:
-                audio_evidence.append(min((0.4 - lip_audio_corr) / 0.4, 1.0))
+            if lip_audio_corr > 0.6:  # Good correlation
+                base_score -= 0.15
+        
+        # ========== DEEPFAKE EVIDENCE (INCREASES score) ==========
+        # Require STRONG thresholds to avoid false positives
+        
+        # Motion anomalies (require very high values)
+        if constant_motion > 0.75:  # Very high = suspicious
+            strong_evidence_count += 1
+        elif constant_motion > 0.65:
+            moderate_evidence_count += 1
+        
+        if temporal_identity > 0.7:  # Very high variance
+            strong_evidence_count += 1
+        elif temporal_identity > 0.6:
+            moderate_evidence_count += 1
+        
+        if head_jitter > 0.75:  # Very high jitter
+            strong_evidence_count += 1
+        elif head_jitter > 0.65:
+            moderate_evidence_count += 1
+        
+        # Anatomy anomalies (require actual detections, not defaults)
+        hand_missing = features.get('hand_missing_finger_ratio', 0.0)
+        if hand_missing > 0.5:  # High threshold - actual missing fingers
+            strong_evidence_count += 1
+        elif hand_missing > 0.3:
+            moderate_evidence_count += 1
+        
+        hand_abnormal = features.get('hand_abnormal_angle_ratio', 0.0)
+        if hand_abnormal > 0.5:
+            strong_evidence_count += 1
+        elif hand_abnormal > 0.3:
+            moderate_evidence_count += 1
+        
+        mouth_extreme = features.get('extreme_mouth_open_frequency', 0.0)
+        if mouth_extreme > 0.5:  # Very frequent extreme openings
+            strong_evidence_count += 1
+        elif mouth_extreme > 0.3:
+            moderate_evidence_count += 1
+        
+        blink_irregular = features.get('eye_blink_irregularity', 0.5)
+        if blink_irregular > 0.8:  # Very irregular
+            strong_evidence_count += 1
+        elif blink_irregular > 0.7:
+            moderate_evidence_count += 1
+        
+        if lip_smooth < 0.2:  # Very low smoothness
+            strong_evidence_count += 1
+        elif lip_smooth < 0.3:
+            moderate_evidence_count += 1
+        
+        # Frequency artifacts (require high values)
+        boundary_artifacts = features.get('boundary_artifact_score', 0.0)
+        if boundary_artifacts > 0.7:  # Very high artifacts
+            strong_evidence_count += 1
+        elif boundary_artifacts > 0.6:
+            moderate_evidence_count += 1
+        
+        freq_ratio = features.get('freq_energy_ratio', 0.5)
+        if freq_ratio > 0.8:  # Very abnormal ratio
+            strong_evidence_count += 1
+        elif freq_ratio > 0.7:
+            moderate_evidence_count += 1
+        
+        # Audio sync issues (only if audio present)
+        if has_audio:
+            lip_audio_corr = features.get('lip_audio_correlation', 0.5)
+            if lip_audio_corr < 0.2:  # Very poor correlation
+                strong_evidence_count += 1
+            elif lip_audio_corr < 0.3:
+                moderate_evidence_count += 1
             
             phoneme_lag = features.get('avg_phoneme_lag', 0.0)
-            if phoneme_lag > 0.4:
-                audio_evidence.append(min(phoneme_lag / 1.0, 1.0))
+            if phoneme_lag > 0.7:  # Very high lag
+                strong_evidence_count += 1
+            elif phoneme_lag > 0.5:
+                moderate_evidence_count += 1
         
-        # Combine evidence using weighted average
-        # Require multiple independent signals for high confidence
-        category_scores = []
-        if motion_evidence:
-            category_scores.append(('motion', np.mean(motion_evidence), len(motion_evidence)))
-        if anatomy_evidence:
-            category_scores.append(('anatomy', np.mean(anatomy_evidence), len(anatomy_evidence)))
-        if frequency_evidence:
-            category_scores.append(('frequency', np.mean(frequency_evidence), len(frequency_evidence)))
-        if audio_evidence:
-            category_scores.append(('audio', np.mean(audio_evidence), len(audio_evidence)))
+        # ========== CALCULATE FINAL SCORE ==========
+        # Require multiple strong signals to increase score significantly
+        # Conservative approach: need 3+ strong signals OR 5+ moderate signals
         
-        if not category_scores:
-            # No strong evidence either way
-            return 0.5
+        if strong_evidence_count >= 3:
+            # Multiple strong signals - likely deepfake
+            base_score += 0.5
+        elif strong_evidence_count >= 2:
+            # Some strong signals
+            base_score += 0.3
+        elif strong_evidence_count >= 1:
+            # One strong signal - be cautious
+            base_score += 0.15
         
-        # Weight by number of signals in category (more signals = more reliable)
-        total_weight = sum(count for _, _, count in category_scores)
-        weighted_score = sum(score * count for _, score, count in category_scores) / total_weight if total_weight > 0 else 0.5
+        if moderate_evidence_count >= 5:
+            # Many moderate signals
+            base_score += 0.3
+        elif moderate_evidence_count >= 3:
+            # Several moderate signals
+            base_score += 0.15
+        elif moderate_evidence_count >= 2:
+            # A few moderate signals
+            base_score += 0.08
         
-        # Boost confidence if multiple categories agree
-        num_categories = len(category_scores)
-        if num_categories >= 3:
-            # Multiple independent signals agree
-            weighted_score = min(weighted_score * 1.2, 1.0)
-        elif num_categories == 1:
-            # Only one category - be more conservative
-            weighted_score = weighted_score * 0.8
+        # Ensure score stays in [0, 1] range
+        final_score = float(np.clip(base_score, 0.0, 1.0))
         
-        return float(np.clip(weighted_score, 0.0, 1.0))
+        # If no evidence at all, return low score (assume real)
+        if strong_evidence_count == 0 and moderate_evidence_count == 0:
+            return 0.15  # Low score - assume real content
+        
+        # Cap the maximum score unless we have overwhelming evidence
+        # Require 4+ strong signals OR 6+ moderate signals to exceed 0.7
+        if final_score > 0.7:
+            if strong_evidence_count < 4 and moderate_evidence_count < 6:
+                final_score = 0.65  # Cap at uncertain range
+        
+        # Additional safety: never return 1.0 unless we have 5+ strong signals
+        if final_score >= 0.95 and strong_evidence_count < 5:
+            final_score = 0.85
+        
+        return float(np.clip(final_score, 0.0, 1.0))
     
     def _get_verdict(self, prob: float) -> str:
         """Get verdict from probability."""
