@@ -70,7 +70,11 @@ class DeepfakeFusion:
                             print(f"[fusion] Loaded improved thresholds: AI={self.thresholds.get('ai_threshold_conservative', 0.85):.3f}")
                     return
             except Exception as e:  # pragma: no cover
-                print(f"[fusion] Failed to load improved model ({e}); trying standard model...")
+                # Silent fallback - expected if improved model requires optional dependencies (e.g., xgboost)
+                # Only log if it's not a missing module error
+                error_str = str(e)
+                if "No module named" not in error_str and "xgboost" not in error_str.lower():
+                    print(f"[fusion] Failed to load improved model ({e}); trying standard model...")
                 self.use_interactions = False
         
         # Try to load standard trained model
@@ -82,7 +86,10 @@ class DeepfakeFusion:
                     # One-line log so users can confirm the model is active
                     print(f"[fusion] Loaded supervised fusion model: {FUSION_MODEL_PATH}")
             except Exception as e:  # pragma: no cover
-                print(f"[fusion] Failed to load supervised model ({e}); falling back to rule-based.")
+                # Silent fallback - expected if model requires optional dependencies
+                error_str = str(e)
+                if "No module named" not in error_str:
+                    print(f"[fusion] Failed to load supervised model ({e}); falling back to rule-based.")
                 self.model = None
                 self.use_interactions = False
         

@@ -23,6 +23,7 @@ from core.scene_logic import detect_logic_breaks
 from app.config import DECISION
 from core.provenance import check_provenance
 from core.temporal import optical_flow_oddity, rppg_coherence
+from core.ensemble_detector import detect_with_ensemble
 
 
 def analyze_audio_visual_simple(video_path: str) -> Dict:
@@ -230,10 +231,33 @@ def analyze_media(media_path: str, progress_callback: Optional[Callable[[float, 
         'temporal': {'flow': flow, 'rppg': rppg}
     }
     
-    # Fusion
+    # Fusion - Use feature-based ensemble as PRIMARY method
     emit(96.0, 'fusion', 'Fusing signals', False)
-    fusion = DeepfakeFusion()
-    prob_ai = fusion.predict(analysis_results)
+    
+    ensemble_explanations = []
+    use_ensemble = False
+    
+    # Always use ensemble-based detection for videos (even without trained model, uses rule-based)
+    if not is_image:
+        try:
+            ensemble_result = detect_with_ensemble(media_path, enable_hand_analysis=True)
+            prob_ai = ensemble_result['score']
+            # Store ensemble explanations for merging with reasons later
+            ensemble_explanations = ensemble_result.get('explanations', [])
+            # Store ensemble features in analysis_results for compatibility
+            analysis_results['ensemble_features'] = ensemble_result.get('features', {})
+            use_ensemble = True
+            print(f"[service] Using feature-based ensemble detection (score: {prob_ai:.3f})")
+        except Exception as e:
+            print(f"[service] Ensemble detection failed: {e}, falling back to standard fusion")
+            use_ensemble = False
+            ensemble_explanations = []
+    
+    # Fallback to standard fusion only if ensemble failed or for images
+    if not use_ensemble:
+        fusion = DeepfakeFusion()
+        prob_ai = fusion.predict(analysis_results)
+        print(f"[service] Using standard fusion detection (score: {prob_ai:.3f})")
 
     def decide(prob_ai: float, quality_dict: Dict) -> str:
         blur = quality_dict.get('blur')
@@ -273,6 +297,16 @@ def analyze_media(media_path: str, progress_callback: Optional[Callable[[float, 
     
     # Generate reasons
     reasons = generate_reasons(analysis_results, prob_ai)
+    
+    # If ensemble was used, merge ensemble explanations with reasons
+    if use_ensemble and ensemble_explanations:
+        # Convert ensemble explanations to reason format
+        ensemble_reasons = [
+            {'name': f'ensemble_{i}', 'weight': 0.8, 'detail': exp, 'confidence': 0.85}
+            for i, exp in enumerate(ensemble_explanations)
+        ]
+        # Prepend ensemble reasons (they're more specific)
+        reasons = ensemble_reasons + reasons
     
     # Processing time
     processing_time = time.time() - start_time

@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { AIDetectionAnimation } from './AIDetectionAnimation';
@@ -10,8 +10,25 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ onTryDemo, onUploadMedia }: HeroSectionProps) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"]
+  });
+
+  // Parallax effects for text - pan in/out on scroll
+  const textY = useTransform(scrollYProgress, [0, 0.8, 1], [0, 150, 200]);
+  const textOpacity = useTransform(scrollYProgress, [0, 0.6, 1], [1, 0.8, 0.2]);
+  const textScale = useTransform(scrollYProgress, [0, 0.6, 1], [1, 0.98, 0.92]);
+  const textX = useTransform(scrollYProgress, [0, 0.5, 1], [0, -20, -40]);
+  
+  // Parallax effects for bullet points
+  const bulletsY = useTransform(scrollYProgress, [0, 0.8, 1], [0, 120, 180]);
+  const bulletsOpacity = useTransform(scrollYProgress, [0, 0.6, 1], [1, 0.85, 0.25]);
+  const bulletsScale = useTransform(scrollYProgress, [0, 0.6, 1], [1, 0.98, 0.94]);
+
   return (
-    <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden pt-16">
+    <section ref={sectionRef} className="relative min-h-[95vh] flex items-center justify-center overflow-hidden pt-16">
       <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-rose-50 to-amber-50">
         <div
           className="absolute inset-0 opacity-30"
@@ -40,71 +57,110 @@ export function HeroSection({ onTryDemo, onUploadMedia }: HeroSectionProps) {
         />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+      {/* Top right - Start now button aligned with ACCESS text in login card */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="absolute top-6 sm:top-8 right-4 sm:right-6 lg:right-12 xl:right-16 z-20"
+      >
+        <Button
+          size="lg"
+          onClick={onTryDemo}
+          className="bg-gray-900 hover:bg-gray-800 text-white border-0 shadow-xl hover:shadow-2xl transition-all text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 h-auto group font-semibold rounded-full"
+        >
+          Start now
+          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+        </Button>
+      </motion.div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-16">
+          {/* Left side - Text content centered */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="space-y-8"
+            className="w-full lg:w-auto flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 lg:space-y-8 max-w-2xl"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-md rounded-full border border-orange-200/50 shadow-lg"
-            >
-              <Sparkles className="w-4 h-4 text-orange-600" />
-              <span className="text-sm text-gray-800 font-medium">Powered by Advanced Detection Algorithms</span>
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-5xl sm:text-6xl lg:text-7xl text-gray-900 tracking-tight leading-[1.1] font-extrabold"
-            >
-              See Beyond Reality
-              <br />
-              <span className="bg-gradient-to-r from-orange-600 via-rose-500 to-pink-600 bg-clip-text text-transparent">
-                with Sero
-              </span>
-            </motion.h1>
-
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="text-xl text-gray-700 max-w-xl leading-relaxed font-medium"
+              transition={{ delay: 0.3 }}
+              style={{
+                y: textY,
+                x: textX,
+                opacity: textOpacity,
+                scale: textScale
+              }}
+              className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl text-gray-900 leading-tight font-black tracking-tight"
             >
-              AI that detects deepfakes and restores trust in digital media. Protect authenticity. Empower truth.
+              <span className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
+                AI that detects deepfakes and restores trust in digital media. Protect authenticity.{' '}
+              </span>
+              <span className="font-black bg-gradient-to-r from-orange-600 via-rose-600 to-pink-600 bg-clip-text text-transparent">
+                Empower truth.
+              </span>
             </motion.p>
 
-            <motion.div
+            <motion.ul
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="flex flex-col sm:flex-row gap-4 pt-4"
+              transition={{ delay: 0.4 }}
+              style={{
+                y: bulletsY,
+                opacity: bulletsOpacity,
+                scale: bulletsScale
+              }}
+              className="space-y-5 pt-2 w-full"
             >
-              <Button
-                size="lg"
-                onClick={onTryDemo}
-                className="bg-gray-900 hover:bg-gray-800 text-white border-0 shadow-xl hover:shadow-2xl transition-all text-base px-8 py-6 h-auto group font-semibold"
+              <motion.li
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+                whileHover={{ x: 10, scale: 1.04 }}
+                className="flex items-center justify-center lg:justify-start gap-4 text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-gray-900 font-black cursor-default transition-all"
               >
-                Start now
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={onUploadMedia}
-                className="border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-900 shadow-lg text-base px-8 py-6 h-auto group font-semibold flex items-center gap-2"
+                <motion.span
+                  className="w-5 h-5 rounded-full bg-green-400 flex-shrink-0 shadow-lg shadow-green-400/60"
+                  whileHover={{ scale: 1.5, rotate: 180 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                ></motion.span>
+                <span className="tracking-tight font-black">90%+ Precision (high-signal)</span>
+              </motion.li>
+              <motion.li
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.55 }}
+                whileHover={{ x: 10, scale: 1.04 }}
+                className="flex items-center justify-center lg:justify-start gap-4 text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-gray-900 font-black cursor-default transition-all"
               >
-                Sign up with Google
-              </Button>
-            </motion.div>
+                <motion.span
+                  className="w-5 h-5 rounded-full bg-orange-400 flex-shrink-0 shadow-lg shadow-orange-400/60"
+                  whileHover={{ scale: 1.5, rotate: 180 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                ></motion.span>
+                <span className="tracking-tight font-black">≈ 8–12s Detection Time</span>
+              </motion.li>
+              <motion.li
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 }}
+                whileHover={{ x: 10, scale: 1.04 }}
+                className="flex items-center justify-center lg:justify-start gap-4 text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-gray-900 font-black cursor-default transition-all"
+              >
+                <motion.span
+                  className="w-5 h-5 rounded-full bg-purple-400 flex-shrink-0 shadow-lg shadow-purple-400/60"
+                  whileHover={{ scale: 1.5, rotate: 180 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                ></motion.span>
+                <span className="tracking-tight font-black">3K+ Videos Trained</span>
+              </motion.li>
+            </motion.ul>
           </motion.div>
-          <div className="hidden lg:block">
+          
+          {/* Right side - Login card or animation */}
+          <div className="hidden lg:block w-full lg:w-auto">
             <AIDetectionAnimation />
           </div>
         </div>

@@ -16,8 +16,16 @@ from app.analysis_manager import start_job, get_job
 from app.result_formatter import build_ui_response
 from core.fusion import DeepfakeFusion
 from core import user_store
-from requests_oauthlib import OAuth2Session  # type: ignore[import-untyped]
 from werkzeug.security import generate_password_hash, check_password_hash
+
+# Optional OAuth import
+try:
+    from requests_oauthlib import OAuth2Session  # type: ignore[import-untyped]
+    HAS_OAUTH = True
+except ImportError:
+    OAuth2Session = None  # type: ignore
+    HAS_OAUTH = False
+    # Silent - OAuth is optional
 
 # ----------------------------
 # Reduce noisy runtime logs
@@ -130,6 +138,8 @@ def upload_file():
 
 
 def _google_oauth(state=None):
+    if not HAS_OAUTH or OAuth2Session is None:
+        raise RuntimeError("requests_oauthlib not installed. Install it with: pip install requests-oauthlib")
     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
         raise RuntimeError("Google OAuth client ID/secret not configured")
     return OAuth2Session(
