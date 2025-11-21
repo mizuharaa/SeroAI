@@ -141,14 +141,24 @@ class SeroRuleBasedDetector:
         # Compute rule-based score
         score, explanations = self._compute_score(features)
         
-        # Apply watermark forcing
-        if watermark_features.get('watermark_detected', 0.0) > 0.5:
-            watermark_conf = watermark_features.get('watermark_confidence', 0.0)
-            if watermark_conf >= WATERMARK_CONFIDENCE_THRESHOLD:
-                score = max(score, WATERMARK_FORCE_MIN_SCORE)
+        # Apply watermark forcing - ENSURE MINIMUM 50% SCORE IF WATERMARK DETECTED
+        watermark_detected = watermark_features.get('watermark_detected', 0.0) > 0.5
+        watermark_conf = watermark_features.get('watermark_confidence', 0.0)
+        
+        if watermark_detected:
+            # CRITICAL: If watermark is detected, force minimum 50% score
+            # Other weights can add on top, but minimum is 50%
+            if score < WATERMARK_FORCE_MIN_SCORE:
+                score = WATERMARK_FORCE_MIN_SCORE
                 explanations.append(
-                    f"Generator-like watermark detected (conf={watermark_conf:.2f}); "
-                    f"forcing score >= {WATERMARK_FORCE_MIN_SCORE:.2f}"
+                    f"⚠️ Generator watermark detected (conf={watermark_conf:.2f}); "
+                    f"forcing minimum score to {WATERMARK_FORCE_MIN_SCORE:.2f} (50%). "
+                    f"Other evidence may increase score further."
+                )
+            else:
+                explanations.append(
+                    f"Generator watermark detected (conf={watermark_conf:.2f}); "
+                    f"score already above minimum ({score:.2f} >= {WATERMARK_FORCE_MIN_SCORE:.2f})"
                 )
         
         # Get label

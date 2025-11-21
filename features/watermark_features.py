@@ -1,39 +1,30 @@
 """Watermark detection features for deepfake detection.
 
 Detects visible AI generator watermarks, logos, and text overlays.
+Uses the efficient detect_watermarks.py script for detection.
 """
 
-import cv2
-import numpy as np
-from typing import Dict, List, Optional, Tuple
 import sys
 import os
+from typing import Dict
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from core.media_io import extract_frames
-from core.watermark_ocr_v2 import detect_watermark_in_video
-
-# Try to import OCR libraries
+# Import the efficient watermark detection script
 try:
-    import pytesseract
-    HAS_TESSERACT = True
+    from scripts.detect_watermarks import detect_watermarks_in_video
+    HAS_WATERMARK_DETECTOR = True
 except ImportError:
-    HAS_TESSERACT = False
-
-try:
-    from Levenshtein import distance as levenshtein_distance
-    HAS_LEVENSHTEIN = True
-except ImportError:
-    HAS_LEVENSHTEIN = False
+    HAS_WATERMARK_DETECTOR = False
+    print("[watermark_features] Warning: detect_watermarks script not available")
 
 
 def extract_watermark_features(video_path: str) -> Dict[str, float]:
     """
-    Extract watermark detection features.
+    Extract watermark detection features using the efficient detection script.
     
     Detects:
-    - Visible AI generator watermarks/logos/text overlays
+    - Visible AI generator watermarks/logos/text overlays (SoraAI, Veo, Runway, etc.)
     - Persistent text patterns across frames
     - Generator-style marks in corners/edges
     
@@ -42,33 +33,53 @@ def extract_watermark_features(video_path: str) -> Dict[str, float]:
         
     Returns:
         Dictionary with:
-        - watermark_detected: bool (1.0 if detected, 0.0 otherwise)
+        - watermark_detected: float (1.0 if detected, 0.0 otherwise)
         - watermark_confidence: float [0, 1] - confidence of detection
         - watermark_type: float - encoded type (0=text, 1=logo, 2=pattern)
         - watermark_persistence: float [0, 1] - how persistent across frames
         - watermark_corner_score: float [0, 1] - strength in corner regions
     """
+    if not HAS_WATERMARK_DETECTOR:
+        return _default_watermark_features()
+    
     try:
-        # Use existing watermark detection
-        watermark_result = detect_watermark_in_video(video_path)
+        # Use the efficient watermark detection script
+        # Sample every 1 second, analyze 5-30 frames
+        watermark_result = detect_watermarks_in_video(
+            video_path,
+            sample_interval=1.0,
+            min_frames=5,
+            max_frames=30,
+        )
         
         # Extract features from result
-        detected = watermark_result.get('detected', False)
-        confidence = watermark_result.get('confidence', 0.0)
-        watermark_type = watermark_result.get('type', 'text')
+        detected = watermark_result.get('watermark_detected', False)
+        confidence = watermark_result.get('watermark_confidence', 0.0)
+        watermark_type = watermark_result.get('watermark_type', 'unknown')
         
-        # Encode type: 0=text, 1=logo, 2=pattern
+        # Encode type: 0=text, 1=logo, 2=pattern/unknown
         type_encoded = 0.0
-        if 'logo' in watermark_type.lower():
+        if watermark_type == 'logo':
             type_encoded = 1.0
-        elif 'pattern' in watermark_type.lower():
-            type_encoded = 2.0
+        elif watermark_type == 'text_logo':
+            type_encoded = 0.5  # Mixed
+        elif watermark_type not in ('text', 'logo', 'text_logo'):
+            type_encoded = 2.0  # Pattern/unknown
         
-        # Calculate persistence (how many frames had watermark)
-        persistence = watermark_result.get('persistence', 0.0)
+        # Get persistence from detection details
+        detection_details = watermark_result.get('detection_details', {})
+        persistent_patterns = detection_details.get('persistent_patterns', {})
         
-        # Corner score (watermarks often in corners)
-        corner_score = watermark_result.get('corner_score', 0.0)
+        # Calculate average persistence across all regions
+        if persistent_patterns:
+            persistence = sum(persistent_patterns.values()) / len(persistent_patterns)
+        else:
+            persistence = confidence  # Fallback to confidence
+        
+        # Corner score - check if watermark is in corner regions
+        locations = watermark_result.get('watermark_location', [])
+        corner_regions = ['top_left', 'top_right', 'bottom_left', 'bottom_right']
+        corner_score = 1.0 if any(loc in corner_regions for loc in locations) else 0.5
         
         return {
             'watermark_detected': 1.0 if detected else 0.0,
@@ -79,7 +90,9 @@ def extract_watermark_features(video_path: str) -> Dict[str, float]:
         }
         
     except Exception as e:
-        print(f"[watermark_features] Error: {e}")
+        print(f"[watermark_features] Error detecting watermark: {e}")
+        import traceback
+        traceback.print_exc()
         return _default_watermark_features()
 
 
