@@ -1,0 +1,44 @@
+/**
+ * Performance optimizations for smooth scrolling
+ * These CSS rules help reduce lag during scroll animations
+ */
+
+/* GPU acceleration for animated elements */
+[data-framer-component] {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Optimize will-change usage - only apply when needed */
+.hero-gradient-bg {
+  will-change: background;
+  transform: translateZ(0);
+}
+
+.hero-blur-element {
+  will-change: transform, background;
+  transform: translateZ(0);
+  contain: layout style paint;
+}
+
+/* Reduce repaints during scroll */
+.hero-section {
+  contain: layout style;
+  isolation: isolate;
+}
+
+/* Optimize text rendering during animations */
+.hero-text {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  text-rendering: optimizeSpeed;
+}
+
+/* Reduce blur complexity on lower-end devices */
+@media (prefers-reduced-motion: reduce) {
+  .hero-blur-element {
+    animation: none !important;
+  }
+}
+

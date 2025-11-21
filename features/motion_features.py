@@ -137,6 +137,9 @@ def extract_motion_features(
     # Compute head pose jitter
     head_pose_jitter = _compute_head_pose_jitter(frames, face_boxes)
     
+    # Compute shimmer and noise features
+    shimmer_features = _compute_shimmer_features(frames, flows)
+    
     return {
         'avg_optical_flow_mag_face': avg_optical_flow_mag_face,
         'std_optical_flow_mag_face': std_optical_flow_mag_face,
@@ -146,6 +149,7 @@ def extract_motion_features(
         'head_pose_jitter': head_pose_jitter,
         'flow_magnitude_mean': flow_magnitude_mean,
         'flow_magnitude_std': flow_magnitude_std,
+        **shimmer_features,  # Add shimmer features
     }
 
 
@@ -332,6 +336,117 @@ def _compute_head_pose_jitter(frames: List[np.ndarray], face_boxes: List[Optiona
     return float(np.clip(jitter, 0.0, 1.0))
 
 
+def _compute_shimmer_features(frames: List[np.ndarray], flows: List[np.ndarray]) -> Dict[str, float]:
+    """
+    Compute shimmer and noise features.
+    
+    Detects:
+    - Shimmer intensity: high-frequency texture changes frame-to-frame
+    - Background motion inconsistency: optical flow in static regions
+    - Flat region noise drift: pixel stat drift in flat patches
+    """
+    if len(frames) < 3 or len(flows) < 2:
+        return {
+            'shimmer_intensity': 0.0,
+            'background_motion_inconsistency': 0.0,
+            'flat_region_noise_drift': 0.0,
+        }
+    
+    # Convert to grayscale for analysis
+    gray_frames = [cv2.cvtColor(f, cv2.COLOR_RGB2GRAY) if len(f.shape) == 3 else f for f in frames]
+    
+    # 1. Shimmer intensity: high-frequency texture changes
+    shimmer_scores = []
+    for i in range(1, len(gray_frames)):
+        # High-pass filter to detect high-frequency changes
+        kernel = np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]]) / 8.0
+        hf1 = cv2.filter2D(gray_frames[i-1].astype(np.float32), -1, kernel)
+        hf2 = cv2.filter2D(gray_frames[i].astype(np.float32), -1, kernel)
+        
+        # Frame-to-frame change in high-frequency content
+        diff = np.abs(hf2 - hf1)
+        shimmer_scores.append(np.mean(diff))
+    
+    shimmer_intensity = float(np.mean(shimmer_scores)) if shimmer_scores else 0.0
+    shimmer_intensity = np.clip(shimmer_intensity / 50.0, 0.0, 1.0)  # Normalize
+    
+    # 2. Background motion inconsistency
+    # Find static regions (low variance in optical flow magnitude)
+    flow_mags = [np.sqrt(f[..., 0]**2 + f[..., 1]**2) for f in flows]
+    mag_variance = np.var(np.array(flow_mags), axis=0)
+    
+    # Static regions have low variance
+    static_mask = mag_variance < np.percentile(mag_variance, 30)
+    
+    if np.any(static_mask):
+        # In static regions, flow should be consistent with camera motion
+        # If inconsistent, suggests AI artifacts
+        static_flows = [f[static_mask] for f in flows]
+        static_mags = [np.sqrt(f[..., 0]**2 + f[..., 1]**2) for f in static_flows]
+        
+        if static_mags:
+            # Measure inconsistency: std dev of magnitudes in static regions
+            all_static_mags = np.concatenate(static_mags)
+            inconsistency = float(np.std(all_static_mags) / (np.mean(all_static_mags) + 1e-6))
+            background_motion_inconsistency = float(np.clip(inconsistency, 0.0, 1.0))
+        else:
+            background_motion_inconsistency = 0.0
+    else:
+        background_motion_inconsistency = 0.0
+    
+    # 3. Flat region noise drift
+    # Find flat regions (low texture variance)
+    flat_patches = []
+    for frame in gray_frames[:min(10, len(gray_frames))]:  # Sample frames
+        h, w = frame.shape
+        # Sample patches
+        for y in range(0, h-32, 64):
+            for x in range(0, w-32, 64):
+                patch = frame[y:y+32, x:x+32]
+                variance = np.var(patch)
+                if variance < 100:  # Flat region
+                    flat_patches.append((x, y, patch))
+                    if len(flat_patches) >= 5:
+                        break
+            if len(flat_patches) >= 5:
+                break
+    
+    if len(flat_patches) >= 3:
+        # Track mean/std of patches over time
+        patch_stats = []
+        for x, y, _ in flat_patches[:3]:
+            stats = []
+            for frame in gray_frames:
+                h, w = frame.shape
+                if y+32 <= h and x+32 <= w:
+                    patch = frame[y:y+32, x:x+32]
+                    stats.append([np.mean(patch), np.std(patch)])
+            if len(stats) > 1:
+                patch_stats.append(stats)
+        
+        if patch_stats:
+            # Measure drift: how much stats change over time
+            drifts = []
+            for stats in patch_stats:
+                means = [s[0] for s in stats]
+                stds = [s[1] for s in stats]
+                mean_drift = np.std(means) / (np.mean(means) + 1e-6)
+                std_drift = np.std(stds) / (np.mean(stds) + 1e-6)
+                drifts.append((mean_drift + std_drift) / 2.0)
+            
+            flat_region_noise_drift = float(np.clip(np.mean(drifts), 0.0, 1.0))
+        else:
+            flat_region_noise_drift = 0.0
+    else:
+        flat_region_noise_drift = 0.0
+    
+    return {
+        'shimmer_intensity': shimmer_intensity,
+        'background_motion_inconsistency': background_motion_inconsistency,
+        'flat_region_noise_drift': flat_region_noise_drift,
+    }
+
+
 def _default_motion_features() -> Dict[str, float]:
     """Return default feature values when insufficient frames."""
     return {
@@ -343,5 +458,8 @@ def _default_motion_features() -> Dict[str, float]:
         'head_pose_jitter': 0.5,
         'flow_magnitude_mean': 0.0,
         'flow_magnitude_std': 0.0,
+        'shimmer_intensity': 0.0,
+        'background_motion_inconsistency': 0.0,
+        'flat_region_noise_drift': 0.0,
     }
 

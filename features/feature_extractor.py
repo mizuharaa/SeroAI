@@ -10,6 +10,7 @@ from features.motion_features import extract_motion_features
 from features.anatomy_features import extract_anatomy_features
 from features.frequency_features import extract_frequency_features
 from features.audio_sync_features import extract_audio_sync_features
+from features.watermark_features import extract_watermark_features
 from core.face_detect import FaceDetector
 
 
@@ -62,6 +63,9 @@ def extract_all_features(
                 'head_pose_jitter': 0.5,
                 'flow_magnitude_mean': 0.0,
                 'flow_magnitude_std': 0.0,
+                'shimmer_intensity': 0.0,
+                'background_motion_inconsistency': 0.0,
+                'flat_region_noise_drift': 0.0,
             })
     
     # Anatomy features
@@ -127,6 +131,20 @@ def extract_all_features(
                 'sync_consistency': 0.5,
                 'has_audio': 0.0,
             })
+    
+    # Watermark features (always extracted)
+    try:
+        watermark_features = extract_watermark_features(video_path)
+        all_features.update(watermark_features)
+    except Exception as e:
+        print(f"[feature_extractor] Error extracting watermark features: {e}")
+        all_features.update({
+            'watermark_detected': 0.0,
+            'watermark_confidence': 0.0,
+            'watermark_type': 0.0,
+            'watermark_persistence': 0.0,
+            'watermark_corner_score': 0.0,
+        })
     
     return all_features
 
