@@ -43,7 +43,7 @@ def extract_watermark_features(video_path: str) -> Dict[str, float]:
         return _default_watermark_features()
     
     try:
-        # Use the efficient watermark detection script
+        # Use the improved watermark detection script
         # Sample every 1 second, analyze 5-30 frames
         watermark_result = detect_watermarks_in_video(
             video_path,
@@ -63,23 +63,32 @@ def extract_watermark_features(video_path: str) -> Dict[str, float]:
             type_encoded = 1.0
         elif watermark_type == 'text_logo':
             type_encoded = 0.5  # Mixed
-        elif watermark_type not in ('text', 'logo', 'text_logo'):
+        elif watermark_type == 'text':
+            type_encoded = 0.0
+        else:
             type_encoded = 2.0  # Pattern/unknown
         
-        # Get persistence from detection details
+        # Get detection details (new simplified format)
         detection_details = watermark_result.get('detection_details', {})
-        persistent_patterns = detection_details.get('persistent_patterns', {})
         
-        # Calculate average persistence across all regions
-        if persistent_patterns:
-            persistence = sum(persistent_patterns.values()) / len(persistent_patterns)
-        else:
-            persistence = confidence  # Fallback to confidence
+        # Persistence: use ratio from detection_details if available
+        # The new script returns ratio = frames_with_watermark / frames_checked
+        ratio = detection_details.get('ratio', 0.0)
+        persistence = float(ratio) if detected else 0.0
         
-        # Corner score - check if watermark is in corner regions
+        # Location score - check if watermark is in corner regions or other common locations
         locations = watermark_result.get('watermark_location', [])
         corner_regions = ['top_left', 'top_right', 'bottom_left', 'bottom_right']
-        corner_score = 1.0 if any(loc in corner_regions for loc in locations) else 0.5
+        edge_regions = ['left_edge_top', 'left_edge_mid', 'left_edge_bottom', 
+                       'right_edge_top', 'right_edge_mid', 'right_edge_bottom']
+        
+        # Calculate location score based on where watermark was found
+        if any(loc in corner_regions for loc in locations):
+            corner_score = 1.0  # Strong indicator in corners
+        elif any(loc in edge_regions for loc in locations):
+            corner_score = 0.7  # Good indicator on edges
+        else:
+            corner_score = 0.5  # Unknown location (or overlay)
         
         return {
             'watermark_detected': 1.0 if detected else 0.0,
@@ -87,6 +96,7 @@ def extract_watermark_features(video_path: str) -> Dict[str, float]:
             'watermark_type': type_encoded,
             'watermark_persistence': float(persistence),
             'watermark_corner_score': float(corner_score),
+            'watermark_tracking_confidence': 0.0,  # Not used in new simplified approach
         }
         
     except Exception as e:

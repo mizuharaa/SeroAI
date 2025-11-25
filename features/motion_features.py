@@ -20,8 +20,8 @@ from core.face_detect import FaceDetector
 
 # Try to import face embedding model
 try:
-    import torch
-    from facenet_pytorch import MTCNN, InceptionResnetV1
+    import torch  # type: ignore[import-untyped]
+    from facenet_pytorch import MTCNN, InceptionResnetV1  # type: ignore[import-untyped]
     HAS_FACENET = True
 except ImportError:
     HAS_FACENET = False
@@ -86,7 +86,7 @@ def extract_motion_features(
     for i in range(1, len(gray_frames)):
         # Use Farneback optical flow
         flow = cv2.calcOpticalFlowFarneback(
-            gray_frames[i-1], gray_frames[i], None,
+            gray_frames[i-1], gray_frames[i], None,  # type: ignore[arg-type]
             pyr_scale=0.5, levels=3, winsize=15, iterations=3,
             poly_n=5, poly_sigma=1.2, flags=0
         )
@@ -140,6 +140,9 @@ def extract_motion_features(
     # Compute shimmer and noise features
     shimmer_features = _compute_shimmer_features(frames, flows)
     
+    # Compute face-body motion coherence (most reliable discriminator)
+    face_body_coherence = _compute_face_body_motion_coherence(frames, face_boxes, flows)
+    
     return {
         'avg_optical_flow_mag_face': avg_optical_flow_mag_face,
         'std_optical_flow_mag_face': std_optical_flow_mag_face,
@@ -149,6 +152,7 @@ def extract_motion_features(
         'head_pose_jitter': head_pose_jitter,
         'flow_magnitude_mean': flow_magnitude_mean,
         'flow_magnitude_std': flow_magnitude_std,
+        'face_body_motion_coherence': face_body_coherence,
         **shimmer_features,  # Add shimmer features
     }
 
@@ -162,7 +166,7 @@ def _compute_motion_entropy(flows: List[np.ndarray], face_boxes: List[Optional[T
     directions = []
     for i, flow in enumerate(flows):
         if i + 1 < len(face_boxes) and face_boxes[i + 1] is not None:
-            x1, y1, x2, y2 = face_boxes[i + 1]
+            x1, y1, x2, y2 = face_boxes[i + 1]  # type: ignore[misc]
             x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
             h, w = flow.shape[:2]
             x1, y1 = max(0, x1), max(0, y1)
@@ -201,7 +205,7 @@ def _compute_constant_motion_ratio(flows: List[np.ndarray], face_boxes: List[Opt
     
     for i in range(1, len(flows)):
         if i + 1 < len(face_boxes) and face_boxes[i + 1] is not None:
-            x1, y1, x2, y2 = face_boxes[i + 1]
+            x1, y1, x2, y2 = face_boxes[i + 1]  # type: ignore[misc]
             x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
             h, w = flows[i].shape[:2]
             x1, y1 = max(0, x1), max(0, y1)
@@ -256,7 +260,7 @@ def _compute_temporal_identity_std(frames: List[np.ndarray], face_boxes: List[Op
         embeddings = []
         for i, frame in enumerate(frames):
             if face_boxes[i] is not None:
-                x1, y1, x2, y2 = face_boxes[i]
+                x1, y1, x2, y2 = face_boxes[i]  # type: ignore[misc]
                 x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
                 h, w = frame.shape[:2]
                 x1, y1 = max(0, x1), max(0, y1)
@@ -403,7 +407,7 @@ def _compute_shimmer_features(frames: List[np.ndarray], flows: List[np.ndarray])
         for y in range(0, h-32, 64):
             for x in range(0, w-32, 64):
                 patch = frame[y:y+32, x:x+32]
-                variance = np.var(patch)
+                variance = np.var(patch)  # type: ignore[arg-type]
                 if variance < 100:  # Flat region
                     flat_patches.append((x, y, patch))
                     if len(flat_patches) >= 5:
@@ -420,7 +424,7 @@ def _compute_shimmer_features(frames: List[np.ndarray], flows: List[np.ndarray])
                 h, w = frame.shape
                 if y+32 <= h and x+32 <= w:
                     patch = frame[y:y+32, x:x+32]
-                    stats.append([np.mean(patch), np.std(patch)])
+                    stats.append([np.mean(patch), np.std(patch)])  # type: ignore[arg-type]
             if len(stats) > 1:
                 patch_stats.append(stats)
         
@@ -447,6 +451,104 @@ def _compute_shimmer_features(frames: List[np.ndarray], flows: List[np.ndarray])
     }
 
 
+def _compute_face_body_motion_coherence(
+    frames: List[np.ndarray],
+    face_boxes: List[Optional[Tuple[int, int, int, int]]],
+    flows: List[np.ndarray]
+) -> float:
+    """
+    Compute face-body motion coherence.
+    
+    In real videos: face moves rigidly with head/body (high coherence).
+    In deepfakes: face drifts independently from body (low coherence).
+    
+    Returns:
+        Coherence score [0, 1] where 1.0 = perfect rigid motion, 0.0 = face drifting
+    """
+    if len(frames) < 3 or len(face_boxes) < 3 or not flows:
+        return 1.0  # Default to high coherence (authentic) if insufficient data
+    
+    # Track face center and body region center over time
+    face_centers = []
+    body_centers = []
+    
+    for i, (frame, bbox) in enumerate(zip(frames, face_boxes)):
+        if bbox is None:
+            continue
+        
+        h, w = frame.shape[:2]
+        x1, y1, x2, y2 = bbox
+        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+        
+        # Face center
+        face_cx = (x1 + x2) / 2.0
+        face_cy = (y1 + y2) / 2.0
+        face_centers.append((face_cx, face_cy))
+        
+        # Body region: below face, same width
+        face_height = y2 - y1
+        body_y1 = min(y2 + face_height // 2, h - 1)
+        body_y2 = min(body_y1 + face_height, h - 1)
+        body_x1 = max(0, x1 - face_height // 4)
+        body_x2 = min(w - 1, x2 + face_height // 4)
+        
+        if body_y2 > body_y1 and body_x2 > body_x1:
+            body_cx = (body_x1 + body_x2) / 2.0
+            body_cy = (body_y1 + body_y2) / 2.0
+            body_centers.append((body_cx, body_cy))
+        else:
+            # Fallback: use face center as body center if body region invalid
+            body_centers.append((face_cx, face_cy))
+    
+    if len(face_centers) < 3 or len(body_centers) < 3:
+        return 1.0  # Default to high coherence
+    
+    # Compute relative motion: how much face moves relative to body
+    face_motions = []
+    body_motions = []
+    relative_drifts = []
+    
+    for i in range(1, len(face_centers)):
+        # Face motion
+        face_dx = face_centers[i][0] - face_centers[i-1][0]
+        face_dy = face_centers[i][1] - face_centers[i-1][1]
+        face_motion = np.sqrt(face_dx**2 + face_dy**2)
+        face_motions.append(face_motion)
+        
+        # Body motion
+        body_dx = body_centers[i][0] - body_centers[i-1][0]
+        body_dy = body_centers[i][1] - body_centers[i-1][1]
+        body_motion = np.sqrt(body_dx**2 + body_dy**2)
+        body_motions.append(body_motion)
+        
+        # Relative drift: difference between face and body motion vectors
+        if body_motion > 0.5:  # Only check when body is moving
+            # Compute angle between face and body motion vectors
+            face_angle = np.arctan2(face_dy, face_dx)
+            body_angle = np.arctan2(body_dy, body_dx)
+            angle_diff = np.abs(face_angle - body_angle)
+            angle_diff = np.minimum(angle_diff, 2*np.pi - angle_diff)  # Wrap to [0, π]
+            
+            # Normalize drift: large angle difference or magnitude mismatch = drift
+            angle_drift = angle_diff / np.pi  # [0, 1]
+            mag_ratio = abs(face_motion - body_motion) / (body_motion + 1e-6)
+            mag_drift = min(mag_ratio, 1.0)
+            
+            # Combined drift score
+            relative_drift = (angle_drift + mag_drift) / 2.0
+            relative_drifts.append(relative_drift)
+    
+    if not relative_drifts:
+        return 1.0  # No motion detected, default to high coherence
+    
+    # Coherence = 1.0 - average drift
+    # High drift (low coherence) = deepfake
+    avg_drift = float(np.mean(relative_drifts))
+    coherence = 1.0 - min(avg_drift, 1.0)
+    
+    return float(np.clip(coherence, 0.0, 1.0))
+
+
 def _default_motion_features() -> Dict[str, float]:
     """Return default feature values when insufficient frames."""
     return {
@@ -458,6 +560,7 @@ def _default_motion_features() -> Dict[str, float]:
         'head_pose_jitter': 0.5,
         'flow_magnitude_mean': 0.0,
         'flow_magnitude_std': 0.0,
+        'face_body_motion_coherence': 1.0,  # Default to high coherence (authentic)
         'shimmer_intensity': 0.0,
         'background_motion_inconsistency': 0.0,
         'flat_region_noise_drift': 0.0,
