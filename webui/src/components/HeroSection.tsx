@@ -76,7 +76,7 @@ export function HeroSection({ onTryDemo, onUploadMedia }: HeroSectionProps) {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-[95vh] flex items-center justify-center overflow-hidden pt-16 hero-section"
+      className="relative min-h-screen flex flex-col items-center justify-start overflow-visible pt-16 hero-section pb-20"
     >
       {/* 🔥 Scroll-based gradient background driven by MotionValue */}
       <motion.div
@@ -140,7 +140,7 @@ export function HeroSection({ onTryDemo, onUploadMedia }: HeroSectionProps) {
       </motion.div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-center">
         <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-16">
           {/* Left - Text */}
           <motion.div
@@ -241,7 +241,158 @@ export function HeroSection({ onTryDemo, onUploadMedia }: HeroSectionProps) {
             <AIDetectionAnimation />
           </div>
         </div>
+
+        {/* Download buttons section - positioned after stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="mt-10 lg:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 z-20 relative"
+        >
+          <motion.a
+            href="https://apps.apple.com/app/sero"
+            target="_blank"
+            rel="noopener noreferrer"
+            whileHover={{ scale: 1.08, y: -3 }}
+            whileTap={{ scale: 0.95 }}
+            className="inline-block cursor-pointer"
+          >
+            <img
+              src="https://unboundxinc.com/wp-content/themes/unboundx/images/app-store.svg"
+              width="162"
+              height="48"
+              alt="Download on App Store"
+              className="drop-shadow-2xl hover:drop-shadow-2xl transition-all filter brightness-100 hover:brightness-110"
+            />
+          </motion.a>
+          <motion.a
+            href="https://play.google.com/store/apps/details?id=com.sero"
+            target="_blank"
+            rel="noopener noreferrer"
+            whileHover={{ scale: 1.08, y: -3 }}
+            whileTap={{ scale: 0.95 }}
+            className="inline-block cursor-pointer"
+          >
+            <img
+              src="https://unboundxinc.com/wp-content/themes/unboundx/images/play-store.svg"
+              width="162"
+              height="48"
+              alt="Get it on Google Play"
+              className="drop-shadow-2xl hover:drop-shadow-2xl transition-all filter brightness-100 hover:brightness-110"
+            />
+          </motion.a>
+        </motion.div>
       </div>
+
+      {/* Connect. Protect. Share. Video Section - Outside main content div */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.1 }}
+        className="relative z-20 w-full mt-12 lg:mt-16 pb-12"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Slogan Text with repeating effect */}
+          <div className="text-center mb-12 relative">
+            <motion.p
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight text-gray-900 dark:text-white mb-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.2 }}
+            >
+              Connect. Protect. Share.
+            </motion.p>
+            {/* Repeating text overlay like the reference */}
+            <motion.div
+              className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.3 }}
+            >
+              <motion.p
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tight text-gray-900/10 dark:text-white/10 select-none whitespace-nowrap"
+                animate={{
+                  x: [0, -100, 0],
+                }}
+                transition={{
+                  duration: 20,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }}
+              >
+                Connect. Protect. Share. Connect. Protect. Share. Connect. Protect. Share.
+              </motion.p>
+            </motion.div>
+          </div>
+
+          {/* Video Container */}
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white/30 dark:border-gray-800/30 backdrop-blur-sm bg-white/10 dark:bg-black/20">
+            <div className="aspect-video relative">
+              {/* Video element - hidden by default, show only if video loads */}
+              <video
+                className="w-full h-full object-cover hidden"
+                autoPlay
+                loop
+                muted
+                playsInline
+                poster="/images/connect-protect-share-poster.jpg"
+                onLoadedData={(e) => {
+                  e.currentTarget.classList.remove('hidden');
+                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.classList.add('hidden');
+                }}
+                onError={(e) => {
+                  e.currentTarget.classList.add('hidden');
+                }}
+              >
+                <source src="/videos/connect-protect-share.mp4" type="video/mp4" />
+                <source src="/videos/connect-protect-share.webm" type="video/webm" />
+              </video>
+              
+              {/* Fallback - always visible by default */}
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-orange-200/60 via-pink-200/60 to-purple-200/60 dark:from-cyan-900/60 dark:via-purple-900/60 dark:to-pink-900/60">
+                <div className="text-center text-gray-900 dark:text-white p-8 z-10">
+                  <motion.div
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                    className="mb-6"
+                  >
+                    <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/20 dark:bg-black/20 backdrop-blur-sm border-2 border-white/30 dark:border-white/10">
+                      <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse" />
+                      <span className="text-sm font-bold uppercase tracking-wider">Live Connection</span>
+                    </div>
+                  </motion.div>
+                  <p className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
+                    Connect. Protect. Share.
+                  </p>
+                  <p className="text-lg md:text-xl opacity-90 font-semibold mb-2">People protecting each other with phones</p>
+                  <p className="text-sm opacity-70 mt-2">Community-driven security platform</p>
+                </div>
+              </div>
+              
+              {/* Overlay gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+              
+              {/* Repeating text overlay on video */}
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden"
+                animate={{
+                  opacity: [0.15, 0.25, 0.15],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+              >
+                <p className="text-5xl md:text-7xl lg:text-9xl font-black text-white/20 dark:text-white/10 select-none whitespace-nowrap">
+                  Connect. Protect. Share.
+                </p>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
     </section>
   );
 }

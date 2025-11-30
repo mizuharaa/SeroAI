@@ -112,3 +112,55 @@ html {
 .dark .border-gray-300 { border-color: #334155 !important; }        /* slate-700 */
 .dark .shadow { box-shadow: 0 1px 2px 0 rgba(0,0,0,.5) !important; }
 
+/* Sero Brand Font - Mathical-inspired rounded, clean style */
+.sero-brand {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'SF Pro Display', system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Subtle 3D embossed effect like mathical */
+  text-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    0 0 0 rgba(0, 0, 0, 0);
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Responsive scaling for Sero brand */
+@media (max-width: 640px) {
+  .sero-brand {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Enhanced text with punched-out effect */
+.text-punched {
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.15),
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 0 0 rgba(255, 255, 255, 0.1),
+    0 -1px 0 rgba(255, 255, 255, 0.05);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Curved elements with enhanced depth */
+.curved-card {
+  border-radius: 2rem;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+.curved-card-lg {
+  border-radius: 2.5rem;
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+}
+

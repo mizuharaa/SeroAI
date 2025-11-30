@@ -45,8 +45,7 @@ export function LoadingAnimation({ onComplete }: LoadingAnimationProps) {
         <div className="relative z-10 flex flex-col items-center gap-8">
           <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.6, ease: 'easeOut' }}>
             <motion.h1
-              className="text-8xl bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent"
-              style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 900 }}
+              className="text-8xl sero-brand bg-gradient-to-r from-orange-500 via-rose-500 to-pink-500 bg-clip-text text-transparent"
               animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
               transition={{ duration: 3, repeat: Infinity }}
             >

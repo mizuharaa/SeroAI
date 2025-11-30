@@ -53,68 +53,19 @@ class DeepfakeFusion:
         self.load_models()
     
     def load_models(self):
-        """Load pre-trained fusion model, calibration, and threshold config."""
-        # Try to load improved model first (if available)
-        improved_model_path = "models/fusion_improved.pkl"
-        if os.path.exists(improved_model_path):
-            try:
-                if joblib is not None:
-                    self.model = joblib.load(improved_model_path)
-                    self.use_interactions = True  # Flag to create interaction features
-                    print(f"[fusion] Loaded improved ensemble fusion model: {improved_model_path}")
-                    # Try to load improved thresholds
-                    improved_thresholds_path = "models/fusion_thresholds_improved.json"
-                    if os.path.exists(improved_thresholds_path):
-                        with open(improved_thresholds_path, 'r') as f:
-                            self.thresholds = json.load(f)
-                            print(f"[fusion] Loaded improved thresholds: AI={self.thresholds.get('ai_threshold_conservative', 0.85):.3f}")
-                    return
-            except Exception as e:  # pragma: no cover
-                # Silent fallback - expected if improved model requires optional dependencies (e.g., xgboost)
-                # Only log if it's not a missing module error
-                error_str = str(e)
-                if "No module named" not in error_str and "xgboost" not in error_str.lower():
-                    print(f"[fusion] Failed to load improved model ({e}); trying standard model...")
-                self.use_interactions = False
+        """Load pre-trained fusion model, calibration, and threshold config.
         
-        # Try to load standard trained model
-        if os.path.exists(FUSION_MODEL_PATH):
-            try:
-                if joblib is not None:
-                    self.model = joblib.load(FUSION_MODEL_PATH)
-                    self.use_interactions = False
-                    # One-line log so users can confirm the model is active
-                    print(f"[fusion] Loaded supervised fusion model: {FUSION_MODEL_PATH}")
-            except Exception as e:  # pragma: no cover
-                # Silent fallback - expected if model requires optional dependencies
-                error_str = str(e)
-                if "No module named" not in error_str:
-                    print(f"[fusion] Failed to load supervised model ({e}); falling back to rule-based.")
-                self.model = None
-                self.use_interactions = False
+        DISABLED: Using only rule-based detection algorithms, no trained ML models.
+        This ensures unbiased detection based solely on algorithmic analysis.
+        """
+        # DISABLED: Skip loading trained ML models to avoid bias
+        # Force rule-based fusion using only detection algorithms
+        self.model = 'rule_based'
+        self.use_interactions = False
+        self.calibration = None
+        self.thresholds = None
         
-        # Try to load calibration
-        if os.path.exists(CALIBRATION_PATH):
-            try:
-                with open(CALIBRATION_PATH, 'r') as f:
-                    self.calibration = json.load(f)
-            except Exception:  # pragma: no cover
-                self.calibration = None
-        
-        # Try to load conservative thresholds
-        thresholds_path = "models/fusion_thresholds.json"
-        if os.path.exists(thresholds_path):
-            try:
-                with open(thresholds_path, 'r') as f:
-                    self.thresholds = json.load(f)
-                    print(f"[fusion] Loaded conservative thresholds: AI={self.thresholds.get('ai_threshold_conservative', 0.85):.3f}")
-            except Exception:  # pragma: no cover
-                self.thresholds = None
-        
-        # If no model loaded, use default rule-based fusion
-        if self.model is None:
-            self.model = 'rule_based'
-            print("[fusion] No trained fusion model found; using rule-based fusion.")
+        print("[fusion] Using rule-based fusion (detection algorithms only, no trained models).")
     
     # Columns used by the supervised fusion model (must match training)
     TRAIN_FEATURE_COLUMNS: List[str] = [

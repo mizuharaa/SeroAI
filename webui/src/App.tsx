@@ -41,7 +41,17 @@ import { SimpleGlobe } from './components/SimpleGlobe'
 import { UploadZone } from './components/UploadZone'
 import { AnalysisProgress } from './components/AnalysisProgress'
 import { ResultsDisplay } from './components/ResultsDisplay'
+import { AnalysisLayout } from './components/analysis/AnalysisLayout'
+import { DetectHero } from './components/DetectHero'
 import { SchoolsMarquee } from './components/SchoolsMarquee'
+import {
+  FrequencyDomain3D,
+  PixelStability3D,
+  BiologicalInconsistency3D,
+  OpticalFlow3D,
+  SpatialLogic3D,
+  AudioVisualSync3D,
+} from './components/analysis/Realistic3DIcons'
 
 const navItems = {
   Product: {
@@ -69,39 +79,156 @@ const navItems = {
 
 const PixelGridIcon = () => (
   <svg className="w-8 h-8 text-white" viewBox="0 0 32 32" fill="none">
-    <rect x="4" y="4" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="1.6" />
-    <path d="M10 4v18M16 4v18M4 10h18M4 16h18" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" opacity="0.6" />
-    <circle cx="21" cy="21" r="6" stroke="currentColor" strokeWidth="1.6" />
-    <path d="M25 25l4 4" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+    {/* Futuristic code terminal with depth */}
+    <defs>
+      <linearGradient id="codeGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="currentColor" stopOpacity="1" />
+        <stop offset="100%" stopColor="currentColor" stopOpacity="0.4" />
+      </linearGradient>
+      <linearGradient id="codeGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="currentColor" stopOpacity="0.8" />
+        <stop offset="100%" stopColor="currentColor" stopOpacity="0.2" />
+      </linearGradient>
+    </defs>
+    {/* Terminal frame with 3D effect */}
+    <rect x="3" y="3" width="20" height="20" rx="2" fill="url(#codeGrad1)" opacity="0.15" />
+    <rect x="3" y="3" width="20" height="20" rx="2" stroke="currentColor" strokeWidth="1.2" fill="none" />
+    <rect x="5" y="5" width="16" height="16" rx="1" stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.3" />
+    
+    {/* Code lines with realistic depth */}
+    <rect x="7" y="8" width="8" height="1.5" rx="0.5" fill="currentColor" opacity="0.9" />
+    <rect x="7" y="11" width="12" height="1.5" rx="0.5" fill="currentColor" opacity="0.7" />
+    <rect x="7" y="14" width="6" height="1.5" rx="0.5" fill="currentColor" opacity="0.8" />
+    <rect x="7" y="17" width="10" height="1.5" rx="0.5" fill="currentColor" opacity="0.6" />
+    
+    {/* API connection nodes */}
+    <circle cx="22" cy="22" r="3.5" fill="url(#codeGrad2)" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="22" cy="22" r="2" fill="currentColor" opacity="0.6" />
+    <path d="M25.5 24.5l3.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+    <circle cx="29" cy="28" r="1.5" fill="currentColor" opacity="0.9" />
+    
+    {/* Glowing connection lines */}
+    <path d="M22 22l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
   </svg>
 )
 
 const RealtimeIcon = () => (
   <svg className="w-8 h-8 text-white" viewBox="0 0 32 32" fill="none">
-    <circle cx="16" cy="16" r="10" stroke="currentColor" strokeWidth="1.6" />
-    <path d="M16 8v8l5 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <defs>
+      <radialGradient id="pulseGrad" cx="50%" cy="50%">
+        <stop offset="0%" stopColor="currentColor" stopOpacity="0.8" />
+        <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+      </radialGradient>
+      <linearGradient id="streamGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="currentColor" stopOpacity="1" />
+        <stop offset="100%" stopColor="currentColor" stopOpacity="0.3" />
+      </linearGradient>
+    </defs>
+    
+    {/* Central hub with depth */}
+    <circle cx="16" cy="16" r="9" fill="url(#pulseGrad)" opacity="0.2" />
+    <circle cx="16" cy="16" r="7" stroke="currentColor" strokeWidth="1.8" fill="none" />
+    <circle cx="16" cy="16" r="4.5" fill="currentColor" opacity="0.9" />
+    
+    {/* Real-time data streams - wave patterns */}
     <path
-      d="M6 16c0-5.523 4.477-10 10-10M26 16c0 5.523-4.477 10-10 10"
+      d="M6 12 Q10 8, 14 12 T22 12"
       stroke="currentColor"
       strokeWidth="1.5"
+      fill="none"
       strokeLinecap="round"
-      opacity="0.6"
+      opacity="0.7"
     />
-    <path d="M22 6l4 2-2 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    <path
+      d="M6 20 Q10 24, 14 20 T22 20"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      fill="none"
+      strokeLinecap="round"
+      opacity="0.7"
+    />
+    
+    {/* Data particles flowing */}
+    <circle cx="10" cy="12" r="1.5" fill="currentColor" opacity="0.9" />
+    <circle cx="14" cy="12" r="1.2" fill="currentColor" opacity="0.7" />
+    <circle cx="18" cy="12" r="1.5" fill="currentColor" opacity="0.9" />
+    <circle cx="10" cy="20" r="1.2" fill="currentColor" opacity="0.7" />
+    <circle cx="14" cy="20" r="1.5" fill="currentColor" opacity="0.9" />
+    <circle cx="18" cy="20" r="1.2" fill="currentColor" opacity="0.7" />
+    
+    {/* Clock hands for real-time indication */}
+    <path d="M16 16l0 -5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.9" />
+    <path d="M16 16l4 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+    
+    {/* Outer pulse rings */}
+    <circle cx="16" cy="16" r="11" stroke="currentColor" strokeWidth="1" opacity="0.4" />
+    <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="0.8" opacity="0.2" />
+    
+    {/* Connection arrows indicating flow */}
+    <path d="M24 8l2 -2m0 0l-2 -2m2 2l-4 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />
+    <path d="M24 24l2 2m0 0l-2 2m2 -2l-4 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />
   </svg>
 )
 
 const ShieldGridIcon = () => (
   <svg className="w-8 h-8 text-white" viewBox="0 0 32 32" fill="none">
+    <defs>
+      <linearGradient id="shieldGrad1" x1="50%" y1="0%" x2="50%" y2="100%">
+        <stop offset="0%" stopColor="currentColor" stopOpacity="0.9" />
+        <stop offset="100%" stopColor="currentColor" stopOpacity="0.3" />
+      </linearGradient>
+      <linearGradient id="shieldGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="currentColor" stopOpacity="0.6" />
+        <stop offset="100%" stopColor="currentColor" stopOpacity="0.1" />
+      </linearGradient>
+      <pattern id="gridPattern" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+        <path d="M 4 0 L 0 0 0 4" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.3" />
+      </pattern>
+    </defs>
+    
+    {/* Main shield with 3D depth */}
     <path
-      d="M16 4l9 3v6c0 6.5-4 12.5-9 15-5-2.5-9-8.5-9-15V7l9-3z"
+      d="M16 3.5l8.5 2.8v5.7c0 6.2-3.8 11.8-8.5 14.3-4.7-2.5-8.5-8.1-8.5-14.3V6.3L16 3.5z"
+      fill="url(#shieldGrad1)"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="1.6"
       strokeLinejoin="round"
     />
-    <path d="M16 11v14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
-    <path d="M11 18h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
-    <path d="M12.5 13.5h7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
+    
+    {/* Inner shield layer for depth */}
+    <path
+      d="M16 6.5l6.5 2.2v4.3c0 4.8-2.9 9.2-6.5 11.1-3.6-1.9-6.5-6.3-6.5-11.1V8.7L16 6.5z"
+      fill="url(#shieldGrad2)"
+      stroke="currentColor"
+      strokeWidth="1"
+      strokeLinejoin="round"
+      opacity="0.4"
+    />
+    
+    {/* Grid pattern overlay */}
+    <path
+      d="M16 3.5l8.5 2.8v5.7c0 6.2-3.8 11.8-8.5 14.3-4.7-2.5-8.5-8.1-8.5-14.3V6.3L16 3.5z"
+      fill="url(#gridPattern)"
+      opacity="0.4"
+    />
+    
+    {/* Central security core */}
+    <circle cx="16" cy="14" r="3.5" fill="currentColor" opacity="0.9" />
+    <circle cx="16" cy="14" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+    
+    {/* Lock mechanism details */}
+    <rect x="14.5" y="12" width="3" height="2.5" rx="0.5" fill="currentColor" opacity="0.8" />
+    <path d="M14.5 12h3" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
+    
+    {/* Security verification lines */}
+    <path d="M16 10.5v7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.7" />
+    <path d="M12.5 14h7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.7" />
+    <path d="M13.5 12h5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
+    <path d="M13.5 16h5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
+    
+    {/* Outer protection rings */}
+    <ellipse cx="16" cy="8" rx="6" ry="2" stroke="currentColor" strokeWidth="1" opacity="0.3" />
+    <ellipse cx="16" cy="20" rx="7" ry="3" stroke="currentColor" strokeWidth="0.8" opacity="0.2" />
   </svg>
 )
 
@@ -322,8 +449,13 @@ export default function App() {
                 className="relative px-12 py-8 rounded-3xl bg-gradient-to-br from-orange-500 via-pink-500 to-purple-500 shadow-2xl"
               >
                 <span
-                  className="text-8xl text-white tracking-tight block"
-                  style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 900 }}
+                  className="text-8xl text-white tracking-tight block sero-brand"
+                  style={{ 
+                    background: 'linear-gradient(135deg, #ffffff 0%, #ffffff 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
                 >
                   Sero
                 </span>
@@ -334,16 +466,18 @@ export default function App() {
       )}
 
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled ? 'bg-white/90 dark:bg-slate-950/90 border-b border-gray-200 dark:border-slate-800' : 'bg-transparent'
+        className={`sticky top-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? 'bg-gradient-to-r from-orange-50/95 via-pink-50/95 to-rose-50/95 dark:from-slate-950/95 dark:via-slate-950/90 dark:to-slate-950/95 backdrop-blur-2xl border-b-2 border-orange-200/50 dark:border-slate-700/50 shadow-2xl shadow-orange-500/10'
+            : 'bg-gradient-to-r from-orange-100/80 via-pink-100/70 to-rose-100/80 dark:from-slate-950/20 dark:via-slate-950/15 dark:to-slate-950/20 backdrop-blur-2xl border-b-2 border-orange-300/40 dark:border-slate-800/40 shadow-xl shadow-orange-500/20'
         }`}
         onMouseLeave={() => setActiveDropdown(null)}
       >
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center justify-between h-16">
+          <div className={`flex items-center justify-between transition-all duration-300 ${scrolled ? 'h-14' : 'h-16'}`}>
             <a
               href="/"
-              className="flex items-center cursor-pointer"
+              className="flex items-center cursor-pointer group"
               onClick={(e) => {
                 e.preventDefault()
                 navigate('/')
@@ -363,31 +497,33 @@ export default function App() {
               aria-label="Go to home"
               title="Go to home"
             >
-              <span
-                className="text-4xl bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent tracking-tight"
-                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 900 }}
-              >
+              <span className="text-4xl sero-brand tracking-tighter relative inline-block group-hover:scale-105 transition-transform duration-300" style={{
+                background: 'linear-gradient(135deg, #f97316 0%, #ec4899 50%, #f43f5e 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>
                 Sero
               </span>
             </a>
-            <div className="hidden lg:flex items-center gap-1">
+            <div className="hidden lg:flex items-center gap-2">
               {Object.keys(navItems).map((item) => (
                 <div key={item} onMouseEnter={() => setActiveDropdown(item)} className="relative">
-                  <button className="px-4 py-2 text-gray-900 dark:text-gray-100 hover:text-orange-500 dark:hover:text-orange-400 transition-colors flex items-center gap-1">
+                  <button className="px-5 py-2.5 text-gray-900 dark:text-gray-100 font-semibold transition-all duration-300 flex items-center gap-1.5 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-gradient-to-r hover:from-orange-100/80 hover:to-pink-100/80 dark:hover:from-orange-900/30 dark:hover:to-pink-900/30 rounded-full hover:shadow-lg hover:shadow-orange-500/20 hover:scale-105 border border-transparent hover:border-orange-300/50 dark:hover:border-orange-700/50">
                     <span>{item}</span>
-                    <ChevronDown className="w-4 h-4" />
+                    <ChevronDown className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" />
                   </button>
                 </div>
               ))}
               <a
                 href="#pricing"
-                className="px-4 py-2 text-gray-900 dark:text-gray-100 hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+                className="px-5 py-2.5 text-gray-900 dark:text-gray-100 font-semibold transition-all duration-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-gradient-to-r hover:from-orange-100/80 hover:to-pink-100/80 dark:hover:from-orange-900/30 dark:hover:to-pink-900/30 rounded-full hover:shadow-lg hover:shadow-orange-500/20 hover:scale-105 border border-transparent hover:border-orange-300/50 dark:hover:border-orange-700/50"
               >
                 Pricing
               </a>
               <a
                 href="#contact"
-                className="px-4 py-2 text-gray-900 dark:text-gray-100 hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+                className="px-5 py-2.5 text-gray-900 dark:text-gray-100 font-semibold transition-all duration-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-gradient-to-r hover:from-orange-100/80 hover:to-pink-100/80 dark:hover:from-orange-900/30 dark:hover:to-pink-900/30 rounded-full hover:shadow-lg hover:shadow-orange-500/20 hover:scale-105 border border-transparent hover:border-orange-300/50 dark:hover:border-orange-700/50"
               >
                 Contact
               </a>
@@ -395,30 +531,30 @@ export default function App() {
             <div className="hidden lg:flex items-center gap-3">
               <button
                 onClick={handleDarkModeToggle}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
+                className="p-2.5 rounded-full hover:bg-gradient-to-r hover:from-orange-100/60 hover:to-pink-100/60 dark:hover:from-orange-900/20 dark:hover:to-pink-900/20 transition-all duration-300 flex items-center gap-2 border border-transparent hover:border-orange-300/30 dark:hover:border-orange-700/30 hover:shadow-md"
                 aria-label="Toggle dark mode"
                 role="switch"
                 aria-checked={isDarkMode}
               >
-                {isDarkMode ? <Sun className="w-5 h-5 text-gray-400" /> : <Moon className="w-5 h-5 text-gray-600" />}
-                <span className="text-sm text-gray-700 dark:text-gray-300">{isDarkMode ? 'Dark' : 'Light'}</span>
+                {isDarkMode ? <Sun className="w-5 h-5 text-orange-500" /> : <Moon className="w-5 h-5 text-orange-600" />}
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{isDarkMode ? 'Dark' : 'Light'}</span>
               </button>
               {!authUser ? (
                 <>
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.08, y: -1 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={scrollToAuthPanel}
-                    className="px-5 py-2 text-gray-900 dark:text-gray-100 hover:text-orange-500 transition-colors rounded-full border border-transparent hover:border-orange-200 dark:hover:border-orange-700"
+                    className="px-5 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 border-2 border-orange-400/60 dark:border-orange-500/40 rounded-full hover:bg-gradient-to-r hover:from-orange-50 hover:to-pink-50 dark:hover:from-orange-900/20 dark:hover:to-pink-900/20 hover:border-orange-500 dark:hover:border-orange-400 hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-300"
                   >
                     Login / Sign up
                   </motion.button>
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.08, y: -1 }}
                     whileTap={{ scale: 0.95 }}
                     type="button"
                     onClick={startGoogleLogin}
-                    className="px-5 py-2 text-gray-900 dark:text-gray-100 hover:text-orange-500 transition-colors flex items-center gap-2 rounded-full border border-gray-200 dark:border-slate-700"
+                    className="px-5 py-2.5 text-gray-900 dark:text-gray-100 hover:text-orange-600 dark:hover:text-orange-400 transition-all duration-300 flex items-center gap-2 rounded-full border-2 border-gray-300 dark:border-slate-600 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-gradient-to-r hover:from-orange-50 hover:to-pink-50 dark:hover:from-orange-900/20 dark:hover:to-pink-900/20 hover:shadow-lg hover:shadow-orange-500/20 font-semibold"
                   >
                     <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M18.17 10.19c0-.63-.06-1.24-.16-1.83H10v3.46h4.58c-.2 1.05-.8 1.93-1.69 2.53v2.11h2.73c1.6-1.47 2.53-3.64 2.53-6.27z" fill="#4285F4" />
@@ -431,11 +567,11 @@ export default function App() {
                 </>
               ) : (
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-white/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 border-2 border-orange-200/50 dark:border-orange-700/50 shadow-lg">
                     {authUser.picture ? (
-                      <img src={authUser.picture} alt={authUser.name} className="w-8 h-8 rounded-full object-cover" />
+                      <img src={authUser.picture} alt={authUser.name} className="w-8 h-8 rounded-full object-cover ring-2 ring-orange-400/50" />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-orange-500/80 flex items-center justify-center text-white text-sm font-semibold">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold ring-2 ring-orange-400/50">
                         {authUser.name
                           .split(' ')
                           .map((n) => n[0])
@@ -445,22 +581,23 @@ export default function App() {
                       </div>
                     )}
                     <div className="text-left">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{authUser.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 leading-tight">{authUser.email}</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight">{authUser.name}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 leading-tight">{authUser.email}</p>
                     </div>
                   </div>
-                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleLogout} className="px-5 py-2 text-gray-900 dark:text-gray-100 hover:text-orange-500 transition-colors rounded-full border border-transparent hover:border-orange-200 dark:hover:border-orange-700">
+                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleLogout} className="px-5 py-2 text-gray-900 dark:text-gray-100 hover:text-orange-600 dark:hover:text-orange-400 transition-all duration-300 rounded-full border-2 border-transparent hover:border-orange-400 dark:hover:border-orange-500 hover:bg-gradient-to-r hover:from-orange-50 hover:to-pink-50 dark:hover:from-orange-900/20 dark:hover:to-pink-900/20 font-semibold hover:shadow-lg hover:shadow-orange-500/20">
                     Sign out
                   </motion.button>
                 </div>
               )}
               <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
+                whileHover={{ scale: 1.1, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => withLogoSplash(() => navigate('/detect'))}
-                className="px-6 py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-full shadow-lg shadow-orange-500/30 transition-shadow hover:shadow-orange-500/50"
+                className="px-6 py-2.5 bg-gradient-to-r from-orange-500 via-pink-500 to-rose-500 text-white rounded-full font-bold shadow-xl shadow-orange-500/40 hover:shadow-2xl hover:shadow-orange-500/60 transition-all duration-300 border-2 border-white/20 hover:border-white/40 relative overflow-hidden group"
               >
-                Get Started
+                <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
+                <span className="relative">Get Started</span>
               </motion.button>
             </div>
             <button
@@ -473,15 +610,16 @@ export default function App() {
         </div>
         {activeDropdown && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="absolute inset-x-0 mt-2"
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="absolute inset-x-0 -mt-1 pt-1"
             onMouseLeave={() => setActiveDropdown(null)}
+            onMouseEnter={() => setActiveDropdown(activeDropdown)}
           >
-            <div className="mx-auto w-full max-w-5xl px-6">
-              <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden">
+            <div className="mx-auto w-full max-w-5xl px-6 pt-2">
+              <div className="bg-gradient-to-br from-white via-orange-50/30 to-pink-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border-2 border-orange-200/60 dark:border-orange-700/60 rounded-3xl shadow-2xl shadow-orange-500/20 overflow-hidden backdrop-blur-xl">
                 <div className="p-6">
                   <div className="grid grid-cols-3 gap-4">
                     {navItems[activeDropdown as keyof typeof navItems]?.items.map((item, index) => {
@@ -490,18 +628,18 @@ export default function App() {
                         <motion.a
                           key={item.title}
                           href="#"
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.2, delay: index * 0.05 }}
-                          whileHover={{ x: 5, transition: { duration: 0.2 } }}
-                          className="flex flex-col items-start gap-3 p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                          initial={{ opacity: 0, x: -20, scale: 0.9 }}
+                          animate={{ opacity: 1, x: 0, scale: 1 }}
+                          transition={{ duration: 0.3, delay: index * 0.08, ease: 'easeOut' }}
+                          whileHover={{ x: 8, scale: 1.05, transition: { duration: 0.2 } }}
+                          className="flex flex-col items-start gap-4 p-5 rounded-2xl hover:bg-gradient-to-br hover:from-orange-100/80 hover:to-pink-100/80 dark:hover:from-orange-900/30 dark:hover:to-pink-900/30 transition-all duration-300 border-2 border-transparent hover:border-orange-300/50 dark:hover:border-orange-700/50 hover:shadow-xl hover:shadow-orange-500/20 cursor-pointer group"
                         >
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                            <Icon className="w-5 h-5 text-white" />
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 via-pink-500 to-rose-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-orange-500/40 group-hover:shadow-xl group-hover:shadow-orange-500/60 group-hover:scale-110 transition-all duration-300">
+                            <Icon className="w-6 h-6 text-white" />
                           </div>
                           <div>
-                            <h3 className="text-gray-900 dark:text-white mb-1">{item.title}</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{item.desc}</p>
+                            <h3 className="text-gray-900 dark:text-white mb-1.5 font-bold text-lg group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">{item.title}</h3>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{item.desc}</p>
                           </div>
                         </motion.a>
                       )
@@ -645,65 +783,53 @@ export default function App() {
 function DetectPage() {
   return (
     <div className="pt-20">
-      {/* Top banner styled like hero background */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-200 via-rose-300 to-pink-300 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900" />
-        <motion.div
-          aria-hidden
-          className="absolute -top-24 -left-24 w-[520px] h-[520px] rounded-full bg-gradient-to-tr from-orange-400/40 to-pink-400/40 blur-3xl"
-          animate={{ x: [0, 60, -40, 0], y: [0, 40, -20, 0], scale: [1, 1.08, 1] }}
-          transition={{ duration: 24, repeat: Infinity, ease: 'linear' }}
-        />
-        <motion.div
-          aria-hidden
-          className="absolute bottom-[-120px] right-[-120px] w-[620px] h-[620px] rounded-full bg-gradient-to-bl from-rose-400/40 via-amber-400/30 to-pink-400/40 blur-3xl"
-          animate={{ x: [0, -80, 50, 0], y: [0, -30, 40, 0], scale: [1, 1.1, 1] }}
-          transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
-        />
-        <div className="relative max-w-7xl mx-auto px-6 py-16">
-          <div className="flex items-center justify-between flex-wrap gap-6">
-            <div>
-              <h1
-                className="text-4xl md:text-6xl text-gray-900 dark:text-white tracking-tight"
-                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 900 }}
-              >
-                Deepfake Detection
-              </h1>
-              <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 mt-3">
-                Upload a video or image and get a fast, detailed authenticity report.
-              </p>
-            </div>
-            <div className="hidden md:block">
-              <div className="rounded-2xl p-4 bg-white/80 dark:bg-slate-900/80 border border-gray-200 dark:border-slate-700 shadow">
-                <div className="text-sm text-gray-600 dark:text-gray-300">Typical processing time</div>
-                <div className="text-2xl font-semibold text-orange-600 dark:text-orange-400">~ 8–12s</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick facts cards */}
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { title: 'Supported Formats', desc: 'MP4, MOV, AVI, WebM, JPG, PNG', color: 'from-blue-500 to-cyan-500' },
-              { title: 'Limits', desc: 'Up to 500MB • ~5 minutes', color: 'from-emerald-500 to-green-500' },
-              { title: 'Privacy', desc: 'Files never shared. Local processing options.', color: 'from-purple-500 to-pink-500' }
-            ].map((c) => (
-              <div key={c.title} className="rounded-2xl p-4 border bg-white/70 dark:bg-slate-900/70 border-gray-200 dark:border-slate-700 shadow flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${c.color}`} />
-                <div>
-                  <div className="text-gray-900 dark:text-white font-semibold">{c.title}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">{c.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* New innovative hero with scroll animations */}
+      <DetectHero />
       {/* Main detect content */}
       <DetectSection />
       <SchoolsMarquee />
       <Footer />
     </div>
+  )
+}
+
+// Lightweight Sero colorwave animation component
+function SeroColorwave() {
+  const ref = useRef<HTMLSpanElement>(null)
+  const isInView = useInView(ref, { once: false, margin: '-100px' })
+  const letters = ['S', 'e', 'r', 'o']
+
+  return (
+    <span
+      ref={ref}
+      className="inline-block relative"
+      style={{
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+      }}
+    >
+      {letters.map((letter, idx) => (
+        <span
+          key={idx}
+          className="inline-block font-black bg-clip-text text-transparent"
+          style={{
+            backgroundImage: 'linear-gradient(90deg, #fed7aa 0%, #fdba74 12%, #fb923c 25%, #f97316 37%, #ea580c 50%, #dc2626 62%, #f97316 75%, #fb923c 87%, #fdba74 100%)',
+            backgroundSize: '400% 100%',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            animation: isInView ? `colorwave 8s linear infinite` : 'none',
+            animationDelay: `${idx * 0.3}s`,
+          }}
+        >
+          {letter}
+        </span>
+      ))}
+      <style>{`
+        @keyframes colorwave {
+          0% { background-position: 400% 0; }
+          100% { background-position: -400% 0; }
+        }
+      `}</style>
+    </span>
   )
 }
 
@@ -755,13 +881,13 @@ function HeroLeft(props: {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="block text-7xl sm:text-8xl lg:text-9xl font-black bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 bg-clip-text text-transparent"
+            className="block text-7xl sm:text-8xl lg:text-9xl font-black relative"
             style={{
-              textShadow: '0 0 80px rgba(249, 115, 22, 0.3)',
-              WebkitTextStroke: '1px rgba(249, 115, 22, 0.1)'
+              fontFamily: 'system-ui, -apple-system, sans-serif',
             }}
           >
-            with Sero
+            <span className="text-gray-900 dark:text-white">with </span>
+            <SeroColorwave />
           </motion.span>
         </h1>
       </div>
@@ -1051,6 +1177,16 @@ function DetectSection() {
     { id: '5', name: 'Spatial Logic Verification', description: 'Checking scene coherence and object persistence', status: 'pending', icon: Workflow, gradient: 'from-violet-500 to-purple-500', glowColor: '139, 92, 246' }, // scene_logic
     { id: '6', name: 'Audio-Visual Sync Check', description: 'Verifying lip-sync and audio authenticity', status: 'pending', icon: Headphones, gradient: 'from-pink-500 to-rose-500', glowColor: '236, 72, 153' } // audio_visual
   ])
+  
+  // Icon component mapping for 3D icons
+  const iconComponents = [
+    FrequencyDomain3D,
+    PixelStability3D,
+    BiologicalInconsistency3D,
+    OpticalFlow3D,
+    SpatialLogic3D,
+    AudioVisualSync3D,
+  ]
 
   const handleFileSelect = async (file: File) => {
     setSelectedFile(file)
@@ -1125,91 +1261,117 @@ function DetectSection() {
   }
 
   return (
-    <section ref={ref} id="detect" className="relative py-20 md:py-32 bg-gradient-to-b from-white via-gray-50 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden">
-      {/* Animated background gradients */}
-      <div className="absolute inset-0 pointer-events-none">
+    <section ref={ref} id="detect" className="relative min-h-screen py-12 md:py-16 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
+      {/* Animated background with flowing particles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Flowing gradient orbs */}
         <motion.div
           animate={{ x: [0, 100, 0], y: [0, 50, 0], scale: [1, 1.2, 1] }}
           transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-          className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-400/20 via-pink-400/15 to-purple-400/20 rounded-full blur-3xl"
+          className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-orange-500/30 via-pink-500/20 to-purple-500/30 rounded-full blur-3xl"
         />
         <motion.div
           animate={{ x: [0, -80, 0], y: [0, -60, 0], scale: [1, 1.3, 1] }}
           transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-          className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-400/20 via-cyan-400/15 to-teal-400/20 rounded-full blur-3xl"
+          className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-500/30 via-cyan-500/20 to-teal-500/30 rounded-full blur-3xl"
         />
+        {/* Flowing particles */}
+        {Array.from({ length: 15 }).map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              width: Math.random() * 8 + 4,
+              height: Math.random() * 8 + 4,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              background: `linear-gradient(135deg, rgba(249, 115, 22, 0.4), rgba(236, 72, 153, 0.4))`,
+            }}
+            animate={{
+              y: [0, -30, 0],
+              x: [0, Math.random() * 20 - 10, 0],
+              opacity: [0.3, 0.8, 0.3],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+          />
+        ))}
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Hero Header */}
+        {/* Hero Header - Mathical Style */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-12 md:mb-16"
+          className="text-center mb-8 md:mb-12"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="inline-flex items-center gap-2 rounded-full px-4 py-2 bg-black/5 dark:bg-white/10 text-sm uppercase tracking-[0.4em] text-gray-700 dark:text-gray-300 mb-6"
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-sm uppercase tracking-[0.4em] text-white/80 mb-6"
           >
-            <Sparkles className="w-4 h-4 text-orange-500" />
-            Deepfake Detection
+            <Sparkles className="w-4 h-4 text-orange-400" />
+            Neural Forensics
           </motion.div>
-          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-gray-900 dark:text-white mb-6 tracking-tight leading-tight">
-            Upload Your <span className="bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">Media</span>
+          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 tracking-tight leading-tight text-punched">
+            Drop a video or image to start <br />
+            <span className="bg-gradient-to-r from-orange-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">deepfake detection</span>
           </h2>
-          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
-            Drop a video or image to start deepfake detection. Get instant, detailed authenticity reports powered by neural forensics.
+          <p className="text-lg sm:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed font-medium">
+            Get instant, detailed authenticity reports powered by advanced neural networks.
           </p>
         </motion.div>
 
-        {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-2 gap-6 md:gap-8 lg:gap-10 mb-12">
-          {/* Upload Zone Card */}
+        {/* Main Content Grid - Mathical Style */}
+        <div className="grid lg:grid-cols-3 gap-6 md:gap-8 mb-12">
+          {/* Upload Zone Card - Left Column */}
           <motion.div
             initial={{ opacity: 0, x: -60 }}
             animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -60 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="relative group"
+            className="lg:col-span-1 relative group"
           >
-            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 rounded-3xl blur-lg opacity-20 group-hover:opacity-30 transition-opacity" />
-            <div className="relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl border border-white/40 dark:border-white/10 shadow-2xl p-6 md:p-8">
+            <div className="relative bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-xl curved-card-lg border border-white/20 shadow-2xl p-6 md:p-8 h-full">
               <UploadZone onFileSelect={handleFileSelect} isAnalyzing={overallProgress > 0 && overallProgress < 100} />
             </div>
           </motion.div>
 
-          {/* Progress & Methods Card */}
+          {/* Progress & Methods Card - Right Column (2 columns) */}
           <motion.div
             initial={{ opacity: 0, x: 60 }}
             animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 60 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="relative group"
+            className="lg:col-span-2 relative"
           >
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-3xl blur-lg opacity-20 group-hover:opacity-30 transition-opacity" />
-            <div className="relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl border border-white/40 dark:border-white/10 shadow-2xl p-6 md:p-8">
-              {/* Overall Progress */}
+            <div className="relative bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl curved-card-lg border border-white/10 shadow-2xl p-6 md:p-8">
+              {/* Overall Progress - Mathical Style */}
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Overall Progress</h3>
+                  <h3 className="text-xl font-bold text-white text-punched">Overall Progress</h3>
                   <motion.span
                     key={overallProgress}
                     initial={{ scale: 1.2 }}
                     animate={{ scale: 1 }}
-                    className="text-2xl font-black bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent"
+                    className="text-3xl font-black bg-gradient-to-r from-orange-400 via-pink-400 to-purple-400 bg-clip-text text-transparent"
                   >
                     {Math.round(overallProgress)}%
                   </motion.span>
                 </div>
-                <div className="relative h-4 bg-gray-200 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                {/* Pill-shaped progress bar */}
+                <div className="relative h-6 bg-slate-800 rounded-full overflow-hidden shadow-inner border border-white/10">
                   <motion.div
                     className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 shadow-lg"
                     animate={{ width: `${overallProgress}%` }}
                     transition={{ duration: 0.5, ease: 'easeOut' }}
                   >
                     <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
                       animate={{ x: ['-100%', '100%'] }}
                       transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
                     />
@@ -1217,27 +1379,29 @@ function DetectSection() {
                 </div>
               </div>
 
-              {/* Detection Methods */}
+              {/* Detection Methods - Mathical Style with 3D Icons */}
               <div className="space-y-4">
-                <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Detection Methods</h4>
-                <div className="space-y-3">
+                <h4 className="text-lg font-bold text-white mb-4 text-punched">Detection Methods</h4>
+                <div className="grid sm:grid-cols-2 gap-4">
                   {methods.map((method, index) => {
-                    const Icon = method.icon
+                    const Icon3D = iconComponents[index]
                     const isActive = method.status === 'analyzing'
                     const isComplete = method.status === 'complete'
+                    const progress = isActive ? 50 + (index * 8) : isComplete ? 100 : 0
+                    
                     return (
                       <motion.div
                         key={method.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                         transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
-                        whileHover={{ scale: 1.02, y: -2 }}
-                        className={`relative overflow-hidden rounded-2xl border-2 p-4 transition-all ${
+                        whileHover={{ scale: 1.02, y: -4 }}
+                        className={`relative overflow-hidden curved-card border-2 p-5 transition-all backdrop-blur-sm ${
                           isComplete
-                            ? `bg-gradient-to-br ${method.gradient} bg-opacity-10 ${method.gradient.includes('orange') ? 'border-orange-300 dark:border-orange-700' : method.gradient.includes('purple') ? 'border-purple-300 dark:border-purple-700' : method.gradient.includes('blue') ? 'border-blue-300 dark:border-blue-700' : method.gradient.includes('emerald') ? 'border-emerald-300 dark:border-emerald-700' : method.gradient.includes('violet') ? 'border-violet-300 dark:border-violet-700' : 'border-pink-300 dark:border-pink-700'}`
+                            ? `bg-gradient-to-br ${method.gradient} bg-opacity-15 border-opacity-60`
                             : isActive
-                            ? `bg-gradient-to-br ${method.gradient} bg-opacity-5 ${method.gradient.includes('orange') ? 'border-orange-400 dark:border-orange-600' : method.gradient.includes('purple') ? 'border-purple-400 dark:border-purple-600' : method.gradient.includes('blue') ? 'border-blue-400 dark:border-blue-600' : method.gradient.includes('emerald') ? 'border-emerald-400 dark:border-emerald-600' : method.gradient.includes('violet') ? 'border-violet-400 dark:border-violet-600' : 'border-pink-400 dark:border-pink-600'}`
-                            : 'bg-gray-50 dark:bg-slate-800/50 border-gray-200 dark:border-slate-700'
+                            ? `bg-gradient-to-br ${method.gradient} bg-opacity-10 border-opacity-80`
+                            : 'bg-slate-800/50 border-slate-700/50'
                         }`}
                       >
                         {/* Animated glow for active methods */}
@@ -1248,53 +1412,58 @@ function DetectSection() {
                             transition={{ duration: 2, repeat: Infinity }}
                           />
                         )}
-                        <div className="relative flex items-center gap-4">
+                        <div className="relative flex items-start gap-4">
+                          {/* 3D Icon Container */}
                           <motion.div
-                            className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${method.gradient} shadow-lg`}
-                            animate={isActive ? { scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] } : {}}
+                            className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${method.gradient} shadow-xl border border-white/20 relative overflow-visible`}
+                            animate={isActive ? { scale: [1, 1.05, 1] } : {}}
                             transition={{ duration: 2, repeat: isActive ? Infinity : 0 }}
                           >
-                            {isComplete ? (
-                              <CheckCircle2 className="w-6 h-6 text-white" />
-                            ) : isActive ? (
-                              <Loader2 className="w-6 h-6 text-white animate-spin" />
-                            ) : (
-                              <Icon className="w-6 h-6 text-white" />
+                            {/* Always show the 3D icon */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Icon3D className="w-8 h-8" isActive={isActive} />
+                            </div>
+                            {/* Status overlay */}
+                            {isComplete && (
+                              <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1 shadow-lg z-20">
+                                <CheckCircle2 className="w-4 h-4 text-white" />
+                              </div>
+                            )}
+                            {isActive && (
+                              <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1 shadow-lg z-20 animate-pulse">
+                                <Loader2 className="w-4 h-4 text-white animate-spin" />
+                              </div>
                             )}
                           </motion.div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2 mb-1">
-                              <p className={`text-sm font-bold ${isActive || isComplete ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
+                            <div className="flex items-center justify-between gap-2 mb-2">
+                              <p className={`text-sm font-bold ${isActive || isComplete ? 'text-white text-punched' : 'text-white/70'}`}>
                                 {method.name}
                               </p>
-                              {isActive && (
+                              {(isActive || isComplete) && (
                                 <motion.span
-                                  className="text-xs font-semibold text-gray-500 dark:text-gray-400"
-                                  animate={{ opacity: [0.5, 1, 0.5] }}
-                                  transition={{ duration: 1.5, repeat: Infinity }}
+                                  className="text-xs font-semibold text-white/60 px-2 py-1 rounded-full bg-white/10"
+                                  animate={isActive ? { opacity: [0.6, 1, 0.6] } : {}}
+                                  transition={{ duration: 1.5, repeat: isActive ? Infinity : 0 }}
                                 >
-                                  Analyzing...
+                                  {isComplete ? 'Complete' : 'Analyzing...'}
                                 </motion.span>
                               )}
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{method.description}</p>
+                            <p className="text-xs text-white/60 mb-3 font-medium">{method.description}</p>
+                            {/* Pill-shaped progress indicator */}
+                            {(isActive || isComplete) && (
+                              <div className="relative h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <motion.div
+                                  className={`h-full rounded-full bg-gradient-to-r ${method.gradient}`}
+                                  initial={{ width: '0%' }}
+                                  animate={{ width: `${progress}%` }}
+                                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                                />
+                              </div>
+                            )}
                           </div>
                         </div>
-                        {/* Progress bar for active methods */}
-                        {isActive && (
-                          <motion.div
-                            className="mt-3 h-1.5 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                          >
-                            <motion.div
-                              className={`h-full rounded-full bg-gradient-to-r ${method.gradient}`}
-                              initial={{ width: '0%' }}
-                              animate={{ width: '100%' }}
-                              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                            />
-                          </motion.div>
-                        )}
                       </motion.div>
                     )
                   })}
@@ -1304,19 +1473,58 @@ function DetectSection() {
           </motion.div>
         </div>
 
-        {/* Results Display */}
+        {/* Results Display - New Analysis Layout */}
         {selectedFile && results.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="mt-12"
-          >
-            <ResultsDisplay overallScore={overallScore} results={results} fileName={selectedFile.name} processingTime={processingTime} feedbackId={feedbackId || undefined} />
-          </motion.div>
+          <div className="mt-12 -mx-4 sm:-mx-6 lg:-mx-8">
+            <AnalysisLayout
+              fileName={selectedFile.name}
+              overallScore={overallScore}
+              processingTime={processingTime}
+              framesAnalyzed={Math.round(processingTime * 30)} // Estimate frames based on time
+              stages={methods.map((method, idx) => {
+                // Map backend results to stages
+                const result = results.find((r) => {
+                  const methodMap: Record<number, string> = {
+                    0: 'Frequency Domain Analysis',
+                    1: 'Pixel Stability Analysis',
+                    2: 'Biological Inconsistency Detection',
+                    3: 'Optical Flow Analysis',
+                    4: 'Spatial Logic Verification',
+                    5: 'Audio-Visual Sync Check',
+                  };
+                  return r.method === methodMap[idx];
+                });
+
+                const iconMap: Record<number, 'pixel' | 'motion' | 'frequency' | 'audio' | 'face' | 'verdict'> = {
+                  0: 'frequency',
+                  1: 'pixel',
+                  2: 'face',
+                  3: 'motion',
+                  4: 'pixel', // Spatial logic can use pixel icon
+                  5: 'audio',
+                };
+
+                // Map status: 'pending' -> 'queued'
+                const statusMap: Record<'pending' | 'analyzing' | 'complete', 'queued' | 'analyzing' | 'complete'> = {
+                  pending: 'queued',
+                  analyzing: 'analyzing',
+                  complete: 'complete',
+                };
+
+                return {
+                  id: method.id,
+                  name: method.name,
+                  description: method.description,
+                  status: statusMap[method.status],
+                  score: result?.score,
+                  icon: iconMap[idx] || 'pixel',
+                };
+              })}
+            />
+          </div>
         )}
 
-        {/* Info Cards */}
+        {/* Info Cards - Mathical Style */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
@@ -1336,13 +1544,13 @@ function DetectSection() {
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.5, delay: 0.7 + index * 0.1 }}
                 whileHover={{ scale: 1.05, y: -4 }}
-                className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${item.gradient} bg-opacity-10 border-2 ${item.gradient.includes('blue') ? 'border-blue-300 dark:border-blue-700' : item.gradient.includes('purple') ? 'border-purple-300 dark:border-purple-700' : 'border-emerald-300 dark:border-emerald-700'} p-6 backdrop-blur-sm`}
+                className={`relative overflow-hidden curved-card bg-gradient-to-br ${item.gradient} bg-opacity-15 border-2 border-white/20 p-6 backdrop-blur-sm`}
               >
-                <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${item.gradient} mb-4 shadow-lg`}>
-                  <Icon className="w-6 h-6 text-white" />
+                <div className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${item.gradient} mb-4 shadow-xl border border-white/20`}>
+                  <Icon className="w-7 h-7 text-white" />
                 </div>
-                <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{item.title}</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{item.desc}</p>
+                <h4 className="text-lg font-bold text-white mb-2 text-punched">{item.title}</h4>
+                <p className="text-sm text-white/70 font-medium">{item.desc}</p>
               </motion.div>
             )
           })}
@@ -1382,7 +1590,7 @@ function AIDetectionDemo() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-white/95 via-white/85 to-white/70 dark:from-slate-900/90 dark:via-slate-950/85 dark:to-slate-900/75 p-8 shadow-[0_35px_120px_rgba(15,23,42,0.45)] backdrop-blur-xl dark:border-white/5"
+        className="relative overflow-hidden curved-card-lg border border-white/10 bg-gradient-to-br from-white/95 via-white/85 to-white/70 dark:from-slate-900/90 dark:via-slate-950/85 dark:to-slate-900/75 p-8 shadow-[0_35px_120px_rgba(15,23,42,0.45)] backdrop-blur-xl dark:border-white/5"
       >
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.15]"
@@ -1405,10 +1613,10 @@ function AIDetectionDemo() {
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">File in review</p>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white text-punched" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                     demo_video.mp4
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Media authenticity sweep</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Media authenticity sweep</p>
                 </div>
               </div>
               <motion.span
@@ -1471,15 +1679,15 @@ function AIDetectionDemo() {
                   key={method.name}
                   whileHover={{ scale: 1.015, translateY: -4 }}
                   transition={{ type: 'spring', stiffness: 260, damping: 25 }}
-                  className="relative overflow-hidden rounded-2xl border border-white/30 bg-white/80 p-4 shadow-lg shadow-slate-900/10 dark:border-white/10 dark:bg-slate-900/60 dark:shadow-[0_15px_40px_rgba(0,0,0,0.55)] backdrop-blur"
+                  className="relative overflow-hidden curved-card border border-white/30 bg-white/80 p-5 shadow-lg shadow-slate-900/10 dark:border-white/10 dark:bg-slate-900/60 dark:shadow-[0_15px_40px_rgba(0,0,0,0.55)] backdrop-blur"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900/70 border border-slate-800/80 text-white shadow-[0_10px_25px_rgba(0,0,0,0.35)] dark:bg-white/10 dark:border-white/20">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900/70 border border-slate-800/80 text-white shadow-xl shadow-black/20 dark:bg-white/10 dark:border-white/20">
                       <Icon className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{method.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-300">{method.desc}</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white text-punched">{method.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-300 font-medium">{method.desc}</p>
                     </div>
                     <span className="ml-auto rounded-full bg-slate-900/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:bg-white/10 dark:text-white/70">
                       {method.badge}
@@ -1512,15 +1720,15 @@ function AIDetectionDemo() {
 
           <motion.div
             whileHover={{ scale: 1.01 }}
-            className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-blue-200/70 bg-gradient-to-r from-blue-50/80 to-cyan-50/70 p-5 shadow-inner dark:border-blue-900/50 dark:bg-gradient-to-r dark:from-blue-900/40 dark:to-cyan-900/30"
+            className="flex flex-wrap items-center justify-between gap-4 curved-card border border-blue-200/70 bg-gradient-to-r from-blue-50/80 to-cyan-50/70 p-5 shadow-inner dark:border-blue-900/50 dark:bg-gradient-to-r dark:from-blue-900/40 dark:to-cyan-900/30"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white shadow-lg shadow-blue-500/40">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white shadow-xl shadow-blue-500/40">
                 <Shield className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-base font-semibold text-gray-900 dark:text-white">Authenticity score</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">Synth + watermark fusion underway</p>
+                <p className="text-base font-semibold text-gray-900 dark:text-white text-punched">Authenticity score</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">Synth + watermark fusion underway</p>
               </div>
             </div>
             <div className="text-right">
@@ -1599,6 +1807,170 @@ function StartFreeButton({ onClick }: { onClick: () => void }) {
             Start free
           </div>
         </motion.button>
+      </div>
+    </div>
+  )
+}
+
+// Visualization components for feature cards
+function PixelAnalysisViz({ gradient }: { gradient: string }) {
+  return (
+    <div className="w-full h-full relative flex items-center justify-center p-2">
+      {/* Side-by-side comparison */}
+      <div className="flex gap-1 w-full h-full">
+        {/* Original side */}
+        <div className="flex-1 relative rounded-lg overflow-hidden bg-slate-800/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-white/40" />
+            </div>
+          </div>
+          <div className="absolute top-1 left-1 text-[6px] font-bold text-white/80">ORIGINAL</div>
+        </div>
+        
+        {/* Deepfake side with grid overlay */}
+        <div className="flex-1 relative rounded-lg overflow-hidden bg-slate-800/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-600/30 to-red-600/30 rounded-lg" />
+          {/* Grid pattern overlay */}
+          <svg className="absolute inset-0 w-full h-full opacity-40" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <pattern id="grid-pixel" width="10" height="10" patternUnits="userSpaceOnUse">
+                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgb(34, 197, 94)" strokeWidth="0.5" />
+              </pattern>
+            </defs>
+            <rect width="100" height="100" fill="url(#grid-pixel)" />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center relative">
+              <div className="w-8 h-8 rounded-full bg-white/40" />
+              {/* Facial landmarks overlay */}
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+                <circle cx="35" cy="40" r="1.5" fill="white" opacity="0.9" />
+                <circle cx="65" cy="40" r="1.5" fill="white" opacity="0.9" />
+                <circle cx="50" cy="55" r="1.5" fill="white" opacity="0.9" />
+                <path d="M 40 65 Q 50 70 60 65" stroke="white" strokeWidth="1" fill="none" opacity="0.7" />
+              </svg>
+            </div>
+          </div>
+          <div className="absolute top-1 left-1 text-[6px] font-bold text-green-400">DEEPFAKE</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function NeuralNetworkViz({ gradient }: { gradient: string }) {
+  return (
+    <div className="w-full h-full relative flex items-center justify-center p-3">
+      {/* Face with landmarks and 3D box */}
+      <div className="relative w-20 h-20">
+        {/* Face circle */}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-white/10" />
+        </div>
+        
+        {/* Facial landmarks (red dots) */}
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+          {/* Eye landmarks */}
+          <circle cx="35" cy="40" r="2" fill="#ef4444" opacity="0.9" />
+          <circle cx="65" cy="40" r="2" fill="#ef4444" opacity="0.9" />
+          {/* Nose landmarks */}
+          <circle cx="50" cy="50" r="1.5" fill="#ef4444" opacity="0.9" />
+          <circle cx="45" cy="55" r="1.5" fill="#ef4444" opacity="0.9" />
+          <circle cx="55" cy="55" r="1.5" fill="#ef4444" opacity="0.9" />
+          {/* Mouth landmarks */}
+          <circle cx="40" cy="65" r="1.5" fill="#ef4444" opacity="0.9" />
+          <circle cx="50" cy="68" r="1.5" fill="#ef4444" opacity="0.9" />
+          <circle cx="60" cy="65" r="1.5" fill="#ef4444" opacity="0.9" />
+          {/* Additional face points */}
+          <circle cx="30" cy="30" r="1" fill="#ef4444" opacity="0.7" />
+          <circle cx="70" cy="30" r="1" fill="#ef4444" opacity="0.7" />
+          <circle cx="25" cy="50" r="1" fill="#ef4444" opacity="0.7" />
+          <circle cx="75" cy="50" r="1" fill="#ef4444" opacity="0.7" />
+        </svg>
+        
+        {/* 3D bounding box (wireframe) */}
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" style={{ transform: 'rotateX(15deg) rotateY(-10deg)' }}>
+          <g stroke="#3b82f6" strokeWidth="1.5" fill="none" opacity="0.8">
+            {/* Front face */}
+            <rect x="20" y="25" width="60" height="50" />
+            {/* Back face (offset) */}
+            <rect x="25" y="30" width="60" height="50" />
+            {/* Connecting lines */}
+            <line x1="20" y1="25" x2="25" y2="30" />
+            <line x1="80" y1="25" x2="85" y2="30" />
+            <line x1="20" y1="75" x2="25" y2="80" />
+            <line x1="80" y1="75" x2="85" y2="80" />
+          </g>
+        </svg>
+        
+        {/* Eye tracking lines (green) */}
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+          <line x1="35" y1="40" x2="35" y2="38" stroke="#22c55e" strokeWidth="2" />
+          <line x1="65" y1="40" x2="65" y2="38" stroke="#22c55e" strokeWidth="2" />
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+function RealTimeViz({ gradient }: { gradient: string }) {
+  return (
+    <div className="w-full h-full relative flex items-center justify-center p-2">
+      {/* Video frame with analysis overlays */}
+      <div className="w-full h-full relative rounded-lg overflow-hidden bg-slate-800/50">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg" />
+        
+        {/* Face region */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center relative">
+            <div className="w-12 h-12 rounded-full bg-white/20" />
+          </div>
+        </div>
+        
+        {/* Analysis overlays */}
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+          {/* Scanning lines */}
+          <motion.g
+            initial={{ y: 0 }}
+            animate={{ y: [0, 70, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <line x1="0" y1="30" x2="100" y2="30" stroke="#3b82f6" strokeWidth="1" opacity="0.6" />
+          </motion.g>
+          <motion.g
+            initial={{ y: 0 }}
+            animate={{ y: [0, 50, 0] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: 0.5 }}
+          >
+            <line x1="0" y1="50" x2="100" y2="50" stroke="#3b82f6" strokeWidth="1" opacity="0.4" />
+          </motion.g>
+          
+          {/* Corner detection markers */}
+          <circle cx="20" cy="20" r="2" fill="#3b82f6" opacity="0.8">
+            <animate attributeName="opacity" values="0.3;0.8;0.3" dur="1.5s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="80" cy="20" r="2" fill="#3b82f6" opacity="0.8">
+            <animate attributeName="opacity" values="0.3;0.8;0.3" dur="1.5s" repeatCount="indefinite" begin="0.3s" />
+          </circle>
+          <circle cx="20" cy="80" r="2" fill="#3b82f6" opacity="0.8">
+            <animate attributeName="opacity" values="0.3;0.8;0.3" dur="1.5s" repeatCount="indefinite" begin="0.6s" />
+          </circle>
+          <circle cx="80" cy="80" r="2" fill="#3b82f6" opacity="0.8">
+            <animate attributeName="opacity" values="0.3;0.8;0.3" dur="1.5s" repeatCount="indefinite" begin="0.9s" />
+          </circle>
+          
+          {/* Processing indicator */}
+          <rect x="45" y="85" width="10" height="3" fill="#22c55e" opacity="0.8">
+            <animate attributeName="width" values="10;30;10" dur="1.5s" repeatCount="indefinite" />
+          </rect>
+        </svg>
+        
+        {/* Status text */}
+        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[6px] font-bold text-green-400">
+          ANALYZING...
+        </div>
       </div>
     </div>
   )
@@ -1693,7 +2065,6 @@ function HowItWorksSection() {
         <div className="grid md:grid-cols-3 gap-8 relative">
           {[
             {
-              icon: Search,
               title: 'Pixel Analysis',
               badge: 'Forensic',
               badgeBg: 'bg-orange-100 dark:bg-orange-950/50',
@@ -1704,10 +2075,10 @@ function HowItWorksSection() {
               bg: 'bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20',
               border: 'border-orange-300 dark:border-orange-700',
               direction: 'x',
-              start: -60
+              start: -60,
+              vizType: 'pixel'
             },
             {
-              icon: Network,
               title: 'Neural Networks',
               badge: 'ML Engine',
               badgeBg: 'bg-purple-100 dark:bg-purple-950/50',
@@ -1718,10 +2089,10 @@ function HowItWorksSection() {
               bg: 'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20',
               border: 'border-purple-300 dark:border-purple-700',
               direction: 'y',
-              start: 60
+              start: 60,
+              vizType: 'neural'
             },
             {
-              icon: Timer,
               title: 'Real-time Processing',
               badge: 'Speed',
               badgeBg: 'bg-blue-100 dark:bg-blue-950/50',
@@ -1732,10 +2103,10 @@ function HowItWorksSection() {
               bg: 'bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-950/20 dark:to-blue-950/20',
               border: 'border-blue-300 dark:border-blue-700',
               direction: 'x',
-              start: 60
+              start: 60,
+              vizType: 'realtime'
             }
           ].map((item, index) => {
-            const Icon = item.icon
             return (
               <motion.div
                 key={item.title}
@@ -1765,16 +2136,19 @@ function HowItWorksSection() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/20 to-transparent dark:from-white/5 rounded-bl-[100px] opacity-50" />
                 
                 <div className="relative z-10">
-                  {/* Floating icon with subtle animation */}
+                  {/* Custom visualization instead of icon */}
                   <motion.div
-                    className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-6 shadow-2xl relative`}
-                    whileHover={{ scale: 1.1, y: -4 }}
+                    className={`w-full h-32 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-6 shadow-2xl relative overflow-hidden`}
+                    whileHover={{ scale: 1.05 }}
                     animate={{ y: [0, -4, 0] }}
                     transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                   >
-                    <Icon className="w-10 h-10 text-white" strokeWidth={2.5} />
-                    {/* Icon glow */}
-                    <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${item.gradient} blur-xl opacity-50`} />
+                    {/* Visualization content */}
+                    {item.vizType === 'pixel' && <PixelAnalysisViz gradient={item.gradient} />}
+                    {item.vizType === 'neural' && <NeuralNetworkViz gradient={item.gradient} />}
+                    {item.vizType === 'realtime' && <RealTimeViz gradient={item.gradient} />}
+                    {/* Glow effect */}
+                    <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${item.gradient} blur-xl opacity-30`} />
                   </motion.div>
                   
                   {/* Title with badge */}
@@ -1964,7 +2338,7 @@ function WhySeroSection() {
                     opacity: useTransform(connectionProgress, [0, 0.5, 1], [0.3, 0.8, 1]),
                     scale: useTransform(connectionProgress, [0, 0.5, 1], [0.8, 1.1, 1]),
                   }}
-                  className={isSero ? "bg-gradient-to-r from-orange-600 via-rose-600 to-pink-600 bg-clip-text text-transparent" : ""}
+                  className={isSero ? "sero-brand bg-gradient-to-r from-orange-600 via-rose-600 to-pink-600 bg-clip-text text-transparent" : ""}
                 >
                   {word}
                 </motion.span>
@@ -2470,8 +2844,7 @@ function Footer() {
           <motion.div initial={{ opacity: 0, y: 30 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }} transition={{ duration: 0.5 }}>
             <div className="flex items-center mb-6">
               <span
-                className="text-4xl bg-gradient-to-r from-orange-500 to-orange-400 bg-clip-text text-transparent"
-                style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 900 }}
+                className="text-4xl sero-brand bg-gradient-to-r from-orange-500 via-rose-500 to-pink-500 bg-clip-text text-transparent"
               >
                 Sero
               </span>

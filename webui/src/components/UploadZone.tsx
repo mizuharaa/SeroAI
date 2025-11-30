@@ -38,12 +38,12 @@ export function UploadZone({ onFileSelect, isAnalyzing }: UploadZoneProps) {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       animate={isDragging ? { scale: 1.02 } : { scale: 1 }}
-      className={`relative border-2 border-dashed rounded-2xl p-8 md:p-12 transition-all ${
+      className={`relative border-2 border-dashed curved-card-lg p-8 md:p-12 transition-all ${
         isAnalyzing
-          ? 'border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 cursor-not-allowed opacity-50'
+          ? 'border-white/20 bg-slate-800/30 cursor-not-allowed opacity-50'
           : isDragging
-          ? 'border-orange-400 bg-gradient-to-br from-orange-50/80 to-pink-50/80 dark:from-orange-950/30 dark:to-pink-950/30 cursor-pointer shadow-2xl'
-          : 'border-orange-300 dark:border-orange-700 bg-gradient-to-br from-orange-50/50 to-pink-50/50 dark:from-orange-950/20 dark:to-pink-950/20 hover:bg-gradient-to-br hover:from-orange-50 hover:to-pink-50 dark:hover:from-orange-950/30 dark:hover:to-pink-950/30 hover:border-orange-400 dark:hover:border-orange-600 cursor-pointer shadow-lg hover:shadow-2xl'
+          ? 'border-orange-400 bg-gradient-to-br from-orange-500/20 to-pink-500/20 cursor-pointer shadow-2xl'
+          : 'border-white/30 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 hover:from-blue-500/20 hover:to-cyan-500/20 hover:border-orange-400 cursor-pointer shadow-lg hover:shadow-2xl'
       }`}
     >
       <input
@@ -69,31 +69,31 @@ export function UploadZone({ onFileSelect, isAnalyzing }: UploadZoneProps) {
           </motion.div>
         </motion.div>
         <div className="text-center space-y-2">
-          <h3 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
+          <h3 className="text-lg md:text-xl font-bold text-white text-punched">
             {isDragging ? 'Drop your file here' : 'Drop your file here or click to browse'}
           </h3>
-          <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">
+          <p className="text-sm md:text-base text-white/70 font-medium">
             Supports MP4, AVI, MOV, WebM, JPG, PNG • Max 500MB • Up to 5 minutes
           </p>
         </div>
         <div className="flex gap-6 mt-2">
           <motion.div
-            className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300"
+            className="flex items-center gap-2 text-sm font-semibold text-white/80"
             whileHover={{ scale: 1.1 }}
           >
-            <div className="p-2 rounded-lg bg-blue-500/10 dark:bg-blue-500/20">
-              <FileVideo className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 rounded-xl bg-blue-500/30 shadow-sm border border-white/20">
+              <FileVideo className="w-4 h-4 text-white" />
             </div>
-            <span>Videos</span>
+            <span className="font-bold">Videos</span>
           </motion.div>
           <motion.div
-            className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300"
+            className="flex items-center gap-2 text-sm font-semibold text-white/80"
             whileHover={{ scale: 1.1 }}
           >
-            <div className="p-2 rounded-lg bg-purple-500/10 dark:bg-purple-500/20">
-              <ImageIcon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            <div className="p-2 rounded-xl bg-purple-500/30 shadow-sm border border-white/20">
+              <ImageIcon className="w-4 h-4 text-white" />
             </div>
-            <span>Images</span>
+            <span className="font-bold">Images</span>
           </motion.div>
         </div>
       </div>
