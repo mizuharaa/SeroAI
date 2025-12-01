@@ -1,0 +1,47 @@
+{
+  "feature_stats": {
+    "blink_anomaly_score": {
+      "mean_real": 0.2,
+      "std_real": 0.15,
+      "description": "Blink rate and timing anomaly score. Lower is more normal."
+    },
+    "landmark_jitter_score": {
+      "mean_real": 0.1,
+      "std_real": 0.08,
+      "description": "Facial landmark jitter (std dev over time). Lower is more stable."
+    },
+    "lip_sync_error": {
+      "mean_real": 0.3,
+      "std_real": 0.2,
+      "description": "Lip-sync error (1 - correlation). Lower is better sync."
+    },
+    "texture_artifact_score": {
+      "mean_real": 0.15,
+      "std_real": 0.12,
+      "description": "Texture artifact score from frequency analysis. Lower is more natural."
+    },
+    "pose_background_inconsistency": {
+      "mean_real": 0.2,
+      "std_real": 0.15,
+      "description": "Head pose vs background motion inconsistency. Lower is more consistent."
+    },
+    "watermark_prob": {
+      "mean_real": 0.0,
+      "std_real": 0.1,
+      "description": "Watermark detection probability. Higher indicates generator watermark."
+    }
+  },
+  "weights": {
+    "blink_anomaly_score": 0.20,
+    "landmark_jitter_score": 0.25,
+    "lip_sync_error": 0.15,
+    "texture_artifact_score": 0.20,
+    "pose_background_inconsistency": 0.15,
+    "watermark_prob": 0.05
+  },
+  "bias": 0.0,
+  "decision_threshold": 0.6,
+  "version": "1.0.0",
+  "notes": "Default feature statistics and weights. Should be calibrated on real dataset."
+}
+

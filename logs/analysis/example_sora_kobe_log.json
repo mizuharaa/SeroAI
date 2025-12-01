@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "video_id": "example-sora-kobe-12345",
+    "video_path": "kobe_bryant_sora_video.mp4",
+    "analysis_timestamp": "2025-01-15T14:30:00.000000",
+    "version": "1.0.0"
+  },
+  "features": {
+    "motion_score": 0.420,
+    "bio_physics_score": 0.650,
+    "scene_logic_score": 0.155,
+    "texture_freq_score": 0.367,
+    "watermark_score": 0.93
+  },
+  "deepfake_probability": 0.7897,
+  "final_label": "AI-GENERATED",
+  "provenance_info": {
+    "sora_conf": 0.95,
+    "provenance_type": "sora_style_trusted",
+    "watermark_score": 0.93,
+    "details": "High-confidence Sora-style watermark detected: 'SORA.AI' (confidence=0.92, persistent=true, corner=true, sora_conf=0.95)",
+    "watermark_weight": 0.25,
+    "semantic_boost": 0.30,
+    "semantic_reason": "Semantic impossibility: kobe_bryant (deceased 2020) in Sora-style clip (impossible new footage)"
+  },
+  "explanation": {
+    "motion": "Moderate temporal artifacts: some instability in static regions or edges.",
+    "bio_physics": "Clear anatomical or physical inconsistencies detected.",
+    "scene_logic": "Lighting, shadows, reflections, and geometry all consistent.",
+    "texture_freq": "Some generative-style textures detected (over-smooth details, repeating patterns).",
+    "watermark": "Trusted Sora-style watermark detected (confidence: 0.95). High-confidence Sora-style watermark detected: 'SORA.AI' (confidence=0.92, persistent=true, corner=true, sora_conf=0.95) Semantic impossibility boost: +0.30 (Semantic impossibility: kobe_bryant (deceased 2020) in Sora-style clip (impossible new footage))",
+    "summary": "Final probability: 0.790 → AI-GENERATED"
+  },
+  "video_info": {
+    "fps": 30.0,
+    "frame_count": 300,
+    "width": 1920,
+    "height": 1080
+  },
+  "parameters": {
+    "ai_threshold": 0.60,
+    "auth_threshold": 0.30
+  }
+}
+

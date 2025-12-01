@@ -1,0 +1,7 @@
+{
+  "ai_threshold": 0.50,
+  "auth_threshold": 0.40,
+  "version": "2.0.0",
+  "notes": "More confident thresholds: >= 0.50 = AI-GENERATED, <= 0.40 = AUTHENTIC, else = UNCERTAIN. Narrower UNCERTAIN range for more decisive results."
+}
+

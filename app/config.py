@@ -1,11 +1,11 @@
 DECISION = {
-    # decisive band
-    "UNSURE_LOW": 0.40,
-    "UNSURE_HIGH": 0.60,
-
-    # final thresholds (after calibration)
-    "AI_THRESHOLD": 0.80,
-    "REAL_THRESHOLD": 0.20,
+    # New 5-axis detection system thresholds
+    # Based on expert forensic analyst specification
+    "AI_THRESHOLD": 0.85,      # >= 0.85 → AI-GENERATED
+    "REAL_THRESHOLD": 0.15,    # <= 0.15 → AUTHENTIC
+    # Between 0.15 and 0.85 → UNCERTAIN
+    "UNSURE_LOW": 0.15,
+    "UNSURE_HIGH": 0.85,
 
     # quality gating (used to DOWN-WEIGHT fragile features, NOT to detect AI)
     # These thresholds identify low-quality videos where analysis is less reliable

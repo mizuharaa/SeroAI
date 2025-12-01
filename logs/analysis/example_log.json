@@ -1,0 +1,118 @@
+{
+  "metadata": {
+    "video_id": "example-12345-67890",
+    "video_path": "example_video.mp4",
+    "analysis_timestamp": "2025-01-15T10:30:00.000000",
+    "version": "1.0.0"
+  },
+  "features": {
+    "blink_anomaly_score": 0.35,
+    "landmark_jitter_score": 0.18,
+    "lip_sync_error": 0.42,
+    "texture_artifact_score": 0.22,
+    "pose_background_inconsistency": 0.28,
+    "watermark_prob": 0.0
+  },
+  "normalized_features": {
+    "blink_anomaly_score": 1.0,
+    "landmark_jitter_score": 1.0,
+    "lip_sync_error": 0.6,
+    "texture_artifact_score": 0.583,
+    "pose_background_inconsistency": 0.533,
+    "watermark_prob": 0.0
+  },
+  "deepfake_score": 0.78,
+  "label": "deepfake",
+  "reasons": [
+    {
+      "name": "blink_anomaly_score",
+      "contribution": 0.20,
+      "normalized_value": 1.0,
+      "raw_value": 0.35,
+      "weight": 0.20
+    },
+    {
+      "name": "landmark_jitter_score",
+      "contribution": 0.25,
+      "normalized_value": 1.0,
+      "raw_value": 0.18,
+      "weight": 0.25
+    },
+    {
+      "name": "texture_artifact_score",
+      "contribution": 0.117,
+      "normalized_value": 0.583,
+      "raw_value": 0.22,
+      "weight": 0.20
+    },
+    {
+      "name": "lip_sync_error",
+      "contribution": 0.09,
+      "normalized_value": 0.6,
+      "raw_value": 0.42,
+      "weight": 0.15
+    },
+    {
+      "name": "pose_background_inconsistency",
+      "contribution": 0.08,
+      "normalized_value": 0.533,
+      "raw_value": 0.28,
+      "weight": 0.15
+    },
+    {
+      "name": "watermark_prob",
+      "contribution": 0.0,
+      "normalized_value": 0.0,
+      "raw_value": 0.0,
+      "weight": 0.05
+    }
+  ],
+  "summary": "Deepfake probability 0.78 (High) – blink anomaly score increased probability, landmark jitter score increased probability, texture artifact score increased probability.",
+  "frame_records": [
+    {
+      "timestamp": 0.0,
+      "frame_idx": 0,
+      "face_detected": true,
+      "mouth_open_ratio": 0.5,
+      "audio_energy": null,
+      "eye_aspect_ratio": 0.25,
+      "head_pose_yaw": null,
+      "head_pose_pitch": null,
+      "landmark_jitter": 0.1,
+      "texture_artifact": null,
+      "raw_values": {}
+    },
+    {
+      "timestamp": 0.04,
+      "frame_idx": 1,
+      "face_detected": true,
+      "mouth_open_ratio": 0.5,
+      "audio_energy": null,
+      "eye_aspect_ratio": 0.25,
+      "head_pose_yaw": null,
+      "head_pose_pitch": null,
+      "landmark_jitter": 0.1,
+      "texture_artifact": null,
+      "raw_values": {}
+    },
+    {
+      "timestamp": 0.08,
+      "frame_idx": 2,
+      "face_detected": true,
+      "mouth_open_ratio": 0.5,
+      "audio_energy": null,
+      "eye_aspect_ratio": 0.25,
+      "head_pose_yaw": null,
+      "head_pose_pitch": null,
+      "landmark_jitter": 0.1,
+      "texture_artifact": null,
+      "raw_values": {}
+    }
+  ],
+  "parameters": {
+    "max_frames": 50,
+    "frame_sample_rate": 1,
+    "decision_threshold": 0.6
+  }
+}
+

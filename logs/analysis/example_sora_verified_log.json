@@ -1,0 +1,57 @@
+{
+  "metadata": {
+    "video_id": "example-sora-verified-67890",
+    "video_path": "sora_mlk_brainrot_video.mp4",
+    "analysis_timestamp": "2025-01-15T15:00:00.000000",
+    "version": "1.0.0"
+  },
+  "features": {
+    "motion_score": 0.420,
+    "bio_physics_score": 0.650,
+    "scene_logic_score": 0.155,
+    "texture_freq_score": 0.367,
+    "watermark_score": 0.950
+  },
+  "deepfake_probability": 0.8075,
+  "final_label": "AI-GENERATED",
+  "provenance_info": {
+    "best_provider": "sora",
+    "watermark_conf": 0.95,
+    "provenance_type": "sora",
+    "watermark_detected": true,
+    "has_verified_watermark": true,
+    "watermark_score": 0.95,
+    "match_method": "NCC+ORB",
+    "details": "Verified sora logo watermark detected. Logo similarity: 0.95 (method: NCC+ORB). Region: top_right)",
+    "best_region": "top_right",
+    "axis_weights": {
+      "motion": 0.25,
+      "bio": 0.10,
+      "scene": 0.10,
+      "texture": 0.05,
+      "watermark": 0.50
+    },
+    "base_score": 0.4575,
+    "final_prob": 0.8075,
+    "override_explanation": "Verified sora logo watermark detected; logo similarity 0.95. Switching to watermark-dominant weighting and overriding other axes."
+  },
+  "explanation": {
+    "motion": "Moderate temporal artifacts: some instability in static regions or edges.",
+    "bio_physics": "Clear anatomical or physical inconsistencies detected.",
+    "scene_logic": "Lighting, shadows, reflections, and geometry all consistent.",
+    "texture_freq": "Some generative-style textures detected (over-smooth details, repeating patterns).",
+    "watermark": "Verified sora logo watermark detected (confidence: 0.95, method: NCC+ORB). Verified sora logo watermark detected. Logo similarity: 0.95 (method: NCC+ORB). Region: top_right)) Verified sora logo watermark detected; logo similarity 0.95. Switching to watermark-dominant weighting and overriding other axes.",
+    "summary": "Final probability: 0.808 → AI-GENERATED"
+  },
+  "video_info": {
+    "fps": 30.0,
+    "frame_count": 300,
+    "width": 1920,
+    "height": 1080
+  },
+  "parameters": {
+    "ai_threshold": 0.60,
+    "auth_threshold": 0.30
+  }
+}
+
