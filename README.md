@@ -1,12 +1,22 @@
-# SeroAI — Real-Time Deepfake Defense System
+# 🔗 SeroAI — Real-Time Deepfake Defense System
 
 > **Advanced AI-powered deepfake detection with 5-axis forensic analysis, visual watermark verification, and holistic reasoning**
 
-SeroAI is a production-ready deepfake detection system that analyzes videos and images using multiple detection axes, combining motion analysis, biological realism checks, scene logic verification, texture/frequency artifact detection, and advanced watermark/provenance verification. The system provides detailed, explainable results with configurable thresholds and weights.
+---
+
+## 🎯 Featuring Advanced Deepfake Detection Technology
+
+A production-ready deepfake detection system that analyzes videos and images using multiple detection axes, combining motion analysis, biological realism checks, scene logic verification, texture/frequency artifact detection, and advanced watermark/provenance verification. Built for trust & safety teams, journalists, and AI researchers who need explainable, accurate results.
 
 ---
 
-## 🌟 Key Features
+## 🌐 Available in
+
+**English** (current) • [**한국어**](README.ko.md) • [**日本語**](README.ja.md) • [**中文**](README.zh.md) • [**Español**](README.es.md) • [**Tiếng Việt**](README.vi.md) • [**Français**](README.fr.md)
+
+---
+
+## ✨ Key Features
 
 ### 🎯 **5-Axis Detection System**
 - **Motion/Temporal Stability** (50% weight): Detects frame-to-frame inconsistencies, optical flow anomalies, and temporal artifacts
@@ -38,22 +48,7 @@ SeroAI is a production-ready deepfake detection system that analyzes videos and 
 
 ---
 
-## 📋 Table of Contents
-
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Architecture](#architecture)
-- [Detection Methods](#detection-methods)
-- [API Reference](#api-reference)
-- [Configuration](#configuration)
-- [Development](#development)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
-
----
-
-## 🚀 Installation
+## 🚀 Quick Start
 
 ### Prerequisites
 
@@ -62,112 +57,67 @@ SeroAI is a production-ready deepfake detection system that analyzes videos and 
 - **FFmpeg** (for video processing)
 - **Tesseract OCR** (optional, for text-based watermark detection)
 
-### System Dependencies
-
-#### Windows (PowerShell)
-```powershell
-# Install FFmpeg
-winget install ffmpeg
-
-# Install Tesseract OCR (optional)
-winget install tesseract
-```
-
-#### macOS
-```bash
-# Install FFmpeg
-brew install ffmpeg
-
-# Install Tesseract OCR (optional)
-brew install tesseract
-```
-
-#### Linux (Ubuntu/Debian)
-```bash
-# Install FFmpeg
-sudo apt-get update
-sudo apt-get install ffmpeg
-
-# Install Tesseract OCR (optional)
-sudo apt-get install tesseract-ocr
-```
-
-### Python Environment Setup
+### Installation
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/<your-org-or-user>/SeroAI.git
 cd SeroAI
 
-# 2. Create virtual environment
+# 2. Create and activate virtual environment
 python -m venv .venv
-
-# 3. Activate virtual environment
 # Windows (PowerShell):
 .\.venv\Scripts\Activate.ps1
-# Windows (CMD):
-.venv\Scripts\activate.bat
 # macOS/Linux:
 source .venv/bin/activate
 
-# 4. Upgrade pip
+# 3. Install Python dependencies
 python -m pip install --upgrade pip
-
-# 5. Install Python dependencies
 python -m pip install -r requirements.txt
-```
 
-### Frontend Setup
-
-```bash
-# Navigate to webui directory
+# 4. Install frontend dependencies
 cd webui
-
-# Install Node.js dependencies
 npm ci
-
-# Build production bundle
 npm run build
-
-# Return to project root
 cd ..
-```
 
----
-
-## ⚡ Quick Start
-
-### Start the Server
-
-```bash
-# From project root
+# 5. Start the server
 python app.py
 ```
 
 The server will start on `http://localhost:5000`
 
-### Access the Web Interface
+### System Dependencies
 
-1. Open your browser and navigate to `http://localhost:5000`
-2. Click on the "Detect" section or navigate to `http://localhost:5000/#detect`
-3. Upload a video or image file
-4. Wait for analysis to complete (typically 8-12 seconds)
-5. View detailed results with explanations
-
-### Development Mode
-
-For frontend development with hot-reload:
-
-```bash
-# Terminal 1: Start backend
-python app.py
-
-# Terminal 2: Start frontend dev server
-cd webui
-npm run dev
+**Windows (PowerShell)**:
+```powershell
+winget install ffmpeg
+winget install tesseract  # Optional
 ```
 
-Frontend dev server runs on `http://localhost:5173` and proxies API requests to the backend.
+**macOS**:
+```bash
+brew install ffmpeg
+brew install tesseract  # Optional
+```
+
+**Linux (Ubuntu/Debian)**:
+```bash
+sudo apt-get update
+sudo apt-get install ffmpeg tesseract-ocr  # Optional
+```
+
+---
+
+## 📋 Table of Contents
+
+- [Architecture](#architecture)
+- [Detection Methods](#detection-methods)
+- [API Reference](#api-reference)
+- [Configuration](#configuration)
+- [Development](#development)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
 
 ---
 
@@ -190,8 +140,7 @@ SeroAI/
 │   ├── face_dynamics.py    # Facial analysis
 │   ├── temporal.py         # Motion/temporal analysis
 │   ├── scene_logic.py      # Scene consistency
-│   ├── fusion.py           # Result fusion
-│   └── ...
+│   └── fusion.py           # Result fusion
 ├── config/                  # Configuration files
 │   ├── detector_thresholds.json # Decision thresholds
 │   └── feature_stats.json  # Feature normalization stats
@@ -207,9 +156,7 @@ SeroAI/
 │   └── analysis/           # JSON analysis logs
 ├── uploads/                 # Uploaded media files
 ├── models/                  # Trained models (optional)
-├── scripts/                 # Utility scripts
-├── app.py                   # Flask entry point
-└── requirements.txt        # Python dependencies
+└── scripts/                 # Utility scripts
 ```
 
 ### Detection Pipeline
@@ -249,9 +196,7 @@ SeroAI/
 - **Edge Consistency**: Checks for flickering or inconsistent edges across frames
 - **Temporal Coherence**: Validates smooth transitions between frames
 
-**Scoring**:
-- `0.0` = Perfect temporal consistency (strongly authentic)
-- `1.0` = Severe temporal artifacts (strongly AI-generated)
+**Scoring**: `0.0` = Perfect temporal consistency → `1.0` = Severe temporal artifacts
 
 **Key Indicators**:
 - Face warping or "swimming" effects
@@ -270,9 +215,7 @@ SeroAI/
 - **Symmetry Analysis**: Checks for unnatural facial asymmetry
 - **Anatomical Proportions**: Validates realistic body/face proportions
 
-**Scoring**:
-- `0.0` = Natural biological patterns (strongly authentic)
-- `1.0` = Severe biological inconsistencies (strongly AI-generated)
+**Scoring**: `0.0` = Natural biological patterns → `1.0` = Severe biological inconsistencies
 
 **Key Indicators**:
 - Uncanny smoothness or rubbery appearance
@@ -291,9 +234,7 @@ SeroAI/
 - **Shot Boundary Detection**: Identifies scene cuts and transitions
 - **Background Consistency**: Monitors static background elements
 
-**Scoring**:
-- `0.0` = Physically consistent scene (strongly authentic)
-- `1.0` = Severe scene/logic inconsistencies (strongly AI-generated)
+**Scoring**: `0.0` = Physically consistent scene → `1.0` = Severe scene/logic inconsistencies
 
 **Key Indicators**:
 - Inconsistent lighting or shadows
@@ -311,9 +252,7 @@ SeroAI/
 - **Compression Artifact Detection**: Identifies unusual compression patterns
 - **Spectral Analysis**: Analyzes frequency distributions
 
-**Scoring**:
-- `0.0` = Natural textures and frequencies (strongly authentic)
-- `1.0` = Severe texture/frequency artifacts (strongly AI-generated)
+**Scoring**: `0.0` = Natural textures and frequencies → `1.0` = Severe texture/frequency artifacts
 
 **Key Indicators**:
 - Over-smooth skin or smeared textures
@@ -331,27 +270,13 @@ SeroAI/
 - **Consistency Checking**: Validates watermark presence across frames
 - **Provider Classification**: Identifies specific AI model (Sora, Gemini, Pika, etc.)
 
-**Supported Providers**:
-- Sora (OpenAI)
-- Gemini (Google)
-- Pika / Pika Labs
-- Luma / Luma AI
-- Runway
-- HeyGen
-- D-ID
+**Supported Providers**: Sora (OpenAI) • Gemini (Google) • Pika / Pika Labs • Luma / Luma AI • Runway • HeyGen • D-ID
 
-**Scoring**:
-- `0.0` = No watermark detected (neutral)
-- `1.0` = Verified AI model watermark (strongly AI-generated)
+**Scoring**: `0.0` = No watermark → `1.0` = Verified AI model watermark
 
 **Weight Adjustment**:
 - **Default**: 5% weight (no verified watermark)
 - **Watermark-Dominant**: 50% weight (verified logo detected with ≥80% confidence)
-
-**Key Indicators**:
-- Verified AI model logo in video
-- Consistent watermark across frames
-- Text overlays (lower confidence, not verified)
 
 ---
 
@@ -362,9 +287,7 @@ SeroAI/
 #### `POST /upload`
 Upload a media file for analysis.
 
-**Request**:
-- Content-Type: `multipart/form-data`
-- Body: `file` (video or image file)
+**Request**: `multipart/form-data` with `file` field
 
 **Response**:
 ```json
@@ -395,16 +318,6 @@ Start analysis job for uploaded file.
 #### `GET /analyze/status/<jobId>`
 Get analysis job status and results.
 
-**Response** (in progress):
-```json
-{
-  "status": "processing",
-  "progress": 45.5,
-  "stage": "temporal",
-  "completedStages": ["forensics", "artifact"]
-}
-```
-
 **Response** (completed):
 ```json
 {
@@ -418,17 +331,10 @@ Get analysis job status and results.
     "watermark_score": 0.00,
     "deepfake_probability": 0.40,
     "final_label": "UNCERTAIN",
-    "overallScore": 40,
-    "results": [...]
+    "overallScore": 40
   }
 }
 ```
-
-#### `GET /uploads/<filename>`
-Serve uploaded media file.
-
-#### `GET /`
-Serve web interface (redirects to `webui/dist/index.html`).
 
 ### CLI Usage
 
@@ -441,9 +347,6 @@ python -m scripts.extract_features
 
 # Train fusion model
 python -m scripts.train_fusion
-
-# Evaluate detector on dataset
-python tools/evaluate_detector.py --dataset path/to/dataset
 ```
 
 ---
@@ -458,8 +361,7 @@ Edit `config/detector_thresholds.json`:
 {
   "ai_threshold": 0.50,
   "auth_threshold": 0.40,
-  "version": "2.0.0",
-  "notes": ">= 0.50 = AI-GENERATED, <= 0.40 = AUTHENTIC, else = UNCERTAIN"
+  "version": "2.0.0"
 }
 ```
 
@@ -469,8 +371,6 @@ Edit `config/detector_thresholds.json`:
 - Between thresholds → "UNCERTAIN"
 
 ### Axis Weights
-
-Weights are defined in `core/detection_engine.py` and `core/provenance_detector.py`:
 
 **Default Weights** (no verified watermark):
 ```python
@@ -494,47 +394,23 @@ Weights are defined in `core/detection_engine.py` and `core/provenance_detector.
 }
 ```
 
-### Quality Gate Settings
-
-Edit `app/config.py`:
-
-```python
-MIN_QUALITY_SCORE = 0.3  # Minimum quality threshold
-MIN_BITRATE = 1000       # Minimum bitrate (kbps)
-MAX_BLUR = 0.5           # Maximum blur threshold
-```
-
-### Reference Logos
-
-Place transparent PNG logos in `assets/reference_logos/`:
-- `sora.png`
-- `gemini.png`
-- `pika.png`
-- `luma.png`
-- `runway.png`
-- `heygen.png`
-- `did.png`
-
-See `assets/reference_logos/README.md` for details.
-
 ---
 
 ## 🛠️ Development
 
 ### Project Setup
 
-1. **Clone and install** (see [Installation](#installation))
-
-2. **Set up development environment**:
 ```bash
-# Install pre-commit hooks (if available)
-pre-commit install
+# Install dependencies
+python -m pip install -r requirements.txt
+cd webui && npm ci && cd ..
 
 # Run type checking
 pyright
 
-# Run linting
-pylint core/ app/
+# Start development servers
+python app.py  # Terminal 1
+cd webui && npm run dev  # Terminal 2
 ```
 
 ### Code Structure
@@ -544,27 +420,6 @@ pylint core/ app/
 - **`core/logo_matcher.py`**: Visual logo matching implementation
 - **`app/service.py`**: Service layer for analysis
 - **`webui/src/App.tsx`**: React frontend application
-
-### Adding New Detection Methods
-
-1. Create new module in `core/` (e.g., `core/my_detector.py`)
-2. Implement detection logic returning score `[0, 1]`
-3. Integrate into `core/detection_engine.py`
-4. Add to 5-axis system or create new axis
-5. Update weights in `core/provenance_detector.py`
-
-### Testing
-
-```bash
-# Run unit tests (if available)
-pytest tests/
-
-# Test specific module
-python -m core.debug_infer --input test_video.mp4
-
-# Evaluate on dataset
-python tools/evaluate_detector.py --dataset data/test/
-```
 
 ### Building Frontend
 
@@ -581,79 +436,30 @@ Production build outputs to `webui/dist/`.
 
 ### Common Issues
 
-#### Analysis Stuck at 10%
-**Symptom**: Progress bar stops at 10% during analysis.
-
-**Solution**:
-- Check terminal for error messages
-- Verify video file is valid and not corrupted
-- Ensure FFmpeg is installed and accessible
-- Check `logs/analysis/` for detailed error logs
-
-#### "No fusion model found"
-**Symptom**: Warning about missing fusion model.
-
-**Solution**:
-- This is normal; system uses rule-based detection by default
-- To train a fusion model: `python -m scripts.train_fusion`
-- Model is optional; rule-based detection works standalone
-
-#### OCR Slow Performance
-**Symptom**: Watermark detection takes too long.
-
-**Solution**:
-- Verify Tesseract OCR is installed
-- Reduce frame sampling in `core/watermark_ocr_v2.py`
-- Disable OCR if not needed (edit `core/provenance_detector.py`)
-
-#### Theme Toggle Flashes
-**Symptom**: Dark/light mode toggle causes flashing.
-
-**Solution**:
-- Clear browser cache
-- Ensure `webui/index.html` inline script runs before bundle
-- Check browser console for errors
-
-#### Import Errors
-**Symptom**: Module import errors when running.
-
-**Solution**:
-- Ensure virtual environment is activated
-- Run `python -m pip install -r requirements.txt` again
-- Check Python path includes project root
+| Symptom | Solution |
+|---------|----------|
+| Analysis stuck at 10% | Check terminal for errors, verify video file is valid, ensure FFmpeg is installed |
+| "No fusion model found" | Normal; system uses rule-based detection by default. Train with `python -m scripts.train_fusion` |
+| OCR slow performance | Verify Tesseract OCR is installed, reduce frame sampling |
+| Theme toggle flashes | Clear browser cache, check browser console for errors |
+| Import errors | Ensure virtual environment is activated, reinstall requirements |
 
 ### Debug Mode
 
 Enable verbose logging:
-
 ```python
-# In app.py, set logging level
 import logging
 logging.basicConfig(level=logging.DEBUG)
 ```
-
-### Logs Location
-
-- **Analysis Logs**: `logs/analysis/*.json`
-- **Application Logs**: Check terminal output
-- **Error Logs**: Terminal stderr
 
 ---
 
 ## 📊 Performance
 
-### Typical Runtime
-
-- **Short video (10-30s)**: 8-12 seconds
-- **Medium video (1-2min)**: 15-25 seconds
-- **Long video (5+ min)**: 30-60 seconds
-
-### Optimization Tips
-
-1. **Reduce Frame Budget**: Edit `core/media_io.py` to sample fewer frames
-2. **Disable Optional Features**: Comment out unused detection methods
-3. **Use GPU**: Install CUDA-enabled OpenCV for faster processing
-4. **Parallel Processing**: Enable multiprocessing in `core/detection_engine.py`
+**Typical Runtime**:
+- Short video (10-30s): **8-12 seconds**
+- Medium video (1-2min): **15-25 seconds**
+- Long video (5+ min): **30-60 seconds**
 
 ---
 
@@ -661,18 +467,12 @@ logging.basicConfig(level=logging.DEBUG)
 
 Contributions are welcome! Please follow these steps:
 
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/my-feature`
-3. **Make your changes** with tests
-4. **Commit**: `git commit -m "Add my feature"`
-5. **Push**: `git push origin feature/my-feature`
-6. **Open a Pull Request**
-
-### Code Style
-
-- **Python**: Follow PEP 8, use type hints
-- **TypeScript**: Follow ESLint rules, use TypeScript strict mode
-- **Commits**: Use conventional commit messages
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Make your changes with tests
+4. Commit: `git commit -m "Add my feature"`
+5. Push: `git push origin feature/my-feature`
+6. Open a Pull Request
 
 ### Areas for Contribution
 
@@ -687,27 +487,9 @@ Contributions are welcome! Please follow these steps:
 
 ## 📄 License
 
-MIT © 2025 SeroAI Contributors
+**MIT** © 2025 SeroAI Contributors
 
 See `LICENSE` file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **MediaPipe**: Facial landmark detection
-- **OpenCV**: Computer vision operations
-- **React + Vite**: Frontend framework
-- **Framer Motion**: Animation library
-- **Flask**: Backend framework
-
----
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/<your-org-or-user>/SeroAI/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/<your-org-or-user>/SeroAI/discussions)
-- **Email**: [Your email or support contact]
 
 ---
 
@@ -724,4 +506,17 @@ See `LICENSE` file for details.
 
 ---
 
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/<your-org-or-user>/SeroAI/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/<your-org-or-user>/SeroAI/discussions)
+
+---
+
 **Made with ❤️ for trust and safety teams, journalists, and AI researchers**
+
+---
+
+## 🏷️ Tags
+
+**Python** • **3.9+** • **Deepfake Detection** • **Computer Vision** • **AI/ML** • **React** • **TypeScript** • **Flask** • **License** • **MIT**
